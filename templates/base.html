@@ -8,38 +8,63 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer">
   <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
   <link rel="stylesheet" href="{% static 'css/custom.css' %}">
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col overflow-x-hidden">
   {% csrf_token %}
 
-  <nav class="bg-wood-900 shadow-wood">
+  <nav class="bg-wood-900 shadow-wood relative z-20">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-      <a href="{% url 'events:dashboard' %}" class="font-display text-xl font-semibold text-cream-50">
-        🪵 Meetups
+      <a href="{% url 'events:dashboard' %}" class="flex items-center gap-2 font-display text-xl font-semibold text-cream-50">
+        <i class="fa-solid fa-campground text-copper-400"></i> Meetups
       </a>
-      <div class="flex items-center gap-5">
+
+      <div class="hidden sm:flex items-center gap-6">
         {% if user.is_authenticated %}
-          <a href="{% url 'events:dashboard' %}" class="nav-link">Dashboard</a>
-          <a href="{% url 'events:create' %}" class="nav-link">New event</a>
-          <a href="{% url 'accounts:profile' %}" class="nav-link">{{ user }}</a>
+          <a href="{% url 'events:dashboard' %}" class="nav-link"><i class="fa-solid fa-house mr-1.5"></i>Dashboard</a>
+          <a href="{% url 'events:create' %}" class="nav-link"><i class="fa-solid fa-calendar-plus mr-1.5"></i>New event</a>
+          <a href="{% url 'accounts:profile' %}" class="nav-link"><i class="fa-solid fa-user mr-1.5"></i>{{ user.display_name }}</a>
           <form method="post" action="{% url 'accounts:logout' %}">
             {% csrf_token %}
-            <button type="submit" class="nav-link">Logout</button>
+            <button type="submit" class="nav-link"><i class="fa-solid fa-arrow-right-from-bracket mr-1.5"></i>Logout</button>
           </form>
         {% else %}
-          <a href="{% url 'accounts:login' %}" class="nav-link">Login</a>
-          <a href="{% url 'accounts:signup' %}" class="nav-link">Sign up</a>
+          <a href="{% url 'accounts:login' %}" class="nav-link"><i class="fa-solid fa-right-to-bracket mr-1.5"></i>Login</a>
+          <a href="{% url 'accounts:signup' %}" class="nav-link"><i class="fa-solid fa-user-plus mr-1.5"></i>Sign up</a>
         {% endif %}
       </div>
+
+      <button id="nav-toggle" type="button" class="sm:hidden text-cream-50 text-xl w-9 h-9 flex items-center justify-center" aria-label="Toggle menu">
+        <i id="nav-toggle-open-icon" class="fa-solid fa-bars"></i>
+        <i id="nav-toggle-close-icon" class="fa-solid fa-xmark hidden"></i>
+      </button>
+    </div>
+
+    <div id="nav-mobile-panel" class="hidden sm:hidden border-t border-wood-800 px-4 py-3 flex flex-col gap-1">
+      {% if user.is_authenticated %}
+        <a href="{% url 'events:dashboard' %}" class="nav-link py-2"><i class="fa-solid fa-house mr-2 w-4"></i>Dashboard</a>
+        <a href="{% url 'events:create' %}" class="nav-link py-2"><i class="fa-solid fa-calendar-plus mr-2 w-4"></i>New event</a>
+        <a href="{% url 'accounts:profile' %}" class="nav-link py-2"><i class="fa-solid fa-user mr-2 w-4"></i>{{ user.display_name }}</a>
+        <form method="post" action="{% url 'accounts:logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="nav-link py-2 w-full text-left"><i class="fa-solid fa-arrow-right-from-bracket mr-2 w-4"></i>Logout</button>
+        </form>
+      {% else %}
+        <a href="{% url 'accounts:login' %}" class="nav-link py-2"><i class="fa-solid fa-right-to-bracket mr-2 w-4"></i>Login</a>
+        <a href="{% url 'accounts:signup' %}" class="nav-link py-2"><i class="fa-solid fa-user-plus mr-2 w-4"></i>Sign up</a>
+      {% endif %}
     </div>
   </nav>
 
   {% if messages %}
     <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-4 space-y-2">
       {% for message in messages %}
-        <div class="rounded-lg px-4 py-2 text-sm {% if message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-wood-100 text-wood-800{% endif %}">
+        <div class="rounded-lg px-4 py-2 text-sm flex items-center gap-2 {% if message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-wood-100 text-wood-800{% endif %}">
+          <i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation{% else %}fa-circle-check{% endif %}"></i>
           {{ message }}
         </div>
       {% endfor %}
@@ -51,10 +76,11 @@
   </main>
 
   <footer class="text-center text-xs text-wood-500 py-6">
-    Meetups &mdash; event-based groups, done simply.
+    Meetups [event-based groups, done simply]
   </footer>
 
   <script src="{% static 'js/api.js' %}"></script>
+  <script src="{% static 'js/nav.js' %}"></script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

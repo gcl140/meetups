@@ -1,10 +1,14 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.utils import timezone
 
-from .calendarsync import build_action_ics, build_event_ics
+from .calendarsync import (
+    build_action_ics, build_event_ics, describe_event_changes, send_event_updated_email,
+    snapshot_event_fields,
+)
 from .forms import EventForm
 from .models import Event, EventAction, EventMembership
 
@@ -50,6 +54,7 @@ def event_detail(request, slug):
         'is_admin': event.is_admin(request.user),
         'before_actions': event.actions.filter(action_type=EventAction.TYPE_BEFORE),
         'after_actions': event.actions.filter(action_type=EventAction.TYPE_AFTER),
+        'planning_calls': event.planning_calls.all(),
     })
 
 
@@ -73,21 +78,52 @@ def event_create(request):
     return render(request, 'events/event_form.html', {'form': form, 'is_new': True})
 
 
+def _is_modal_request(request):
+    return request.headers.get('X-Requested-With') == 'fetch'
+
+
 @login_required
 def event_edit(request, slug):
     event = get_object_or_404(Event, slug=slug)
     if not event.is_admin(request.user):
+        if _is_modal_request(request):
+            return JsonResponse({'detail': 'Only the event admin can edit this event.'}, status=403)
         messages.error(request, 'Only the event admin can edit this event.')
         return redirect(event.get_absolute_url())
 
+    is_modal = _is_modal_request(request)
+
     if request.method == 'POST':
+        before = snapshot_event_fields(event)
         form = EventForm(request.POST, request.FILES, instance=event)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Event updated.')
+            changes = describe_event_changes(before, event)
+            if changes:
+                send_event_updated_email(event, changes, changed_by=request.user)
+                messages.success(request, f'Event updated. Notified attendees of {len(changes)} change(s).')
+            else:
+                messages.success(request, 'Event updated.')
+            if is_modal:
+                return JsonResponse({'success': True, 'redirect_url': event.get_absolute_url()})
             return redirect(event.get_absolute_url())
+        elif is_modal:
+            html = render_to_string(
+                'events/_event_form_fields.html',
+                {'form': form, 'event': event, 'is_new': False, 'is_modal': True},
+                request=request,
+            )
+            return JsonResponse({'success': False, 'html': html})
     else:
         form = EventForm(instance=event)
+
+    if is_modal:
+        html = render_to_string(
+            'events/_event_form_fields.html',
+            {'form': form, 'event': event, 'is_new': False, 'is_modal': True},
+            request=request,
+        )
+        return HttpResponse(html)
 
     return render(request, 'events/event_form.html', {'form': form, 'event': event, 'is_new': False})
 

@@ -2,6 +2,26 @@
 // template has both a GOOGLE_MAPS_API_KEY configured and the event has
 // lat/lng set, see events/event_detail.html for the conditional script tag.
 
+function showMapFallback(message) {
+  const el = document.getElementById('map-canvas');
+  const fallback = document.getElementById('map-fallback');
+  if (el) el.classList.add('hidden');
+  if (fallback) {
+    fallback.textContent = message;
+    fallback.classList.remove('hidden');
+  }
+}
+
+// Google calls this specific global whenever the key/billing/referrer
+// setup is wrong, this is by far the most common reason the map silently
+// fails to render, so surface it instead of leaving a blank box.
+window.gm_authFailure = function gmAuthFailure() {
+  showMapFallback(
+    'The embedded map could not load (Google rejected the API key). Check that the Maps JavaScript API is ' +
+    'enabled and billing is set up for this key in the Google Cloud Console. The link above still works.',
+  );
+};
+
 function initMap() {
   const el = document.getElementById('map-canvas');
   if (!el) return;
@@ -9,6 +29,11 @@ function initMap() {
   const lat = parseFloat(el.dataset.lat);
   const lng = parseFloat(el.dataset.lng);
   if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+
+  if (typeof google === 'undefined' || !google.maps) {
+    showMapFallback('The embedded map failed to load.');
+    return;
+  }
 
   const woodMapStyle = [
     { elementType: 'geometry', stylers: [{ color: '#f2e8dc' }] },
@@ -35,3 +60,16 @@ function initMap() {
     title: el.dataset.title || 'Event location',
   });
 }
+
+// If the bootstrap script itself fails to load (network block, ad
+// blocker, bad key format) neither initMap nor gm_authFailure ever
+// fires, so fall back after a few seconds of silence.
+window.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('map-canvas');
+  if (!el) return;
+  setTimeout(() => {
+    if (typeof google === 'undefined') {
+      showMapFallback('The embedded map script never loaded (check your network/ad blocker). The link above still works.');
+    }
+  }, 6000);
+});

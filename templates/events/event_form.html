@@ -3,26 +3,24 @@
 {% block title %}{% if is_new %}New event{% else %}Edit {{ event.title }}{% endif %}, Meetups{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto card">
-  <h1 class="text-2xl mb-6">{% if is_new %}Create an event{% else %}Edit event{% endif %}</h1>
-  <form method="post" enctype="multipart/form-data" class="space-y-4">
-    {% csrf_token %}
-    {% for field in form %}
-      <div>
-        <label class="field-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-        {{ field }}
-        {% if field.help_text %}<p class="field-hint">{{ field.help_text }}</p>{% endif %}
-        {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
-      </div>
-      {% if field.name == 'location_address' %}
-        <button type="button" id="use-my-location" class="btn-outline btn-sm">📍 Use my location</button>
-      {% endif %}
-    {% endfor %}
-    <button type="submit" class="btn-primary w-full">{% if is_new %}Create event{% else %}Save changes{% endif %}</button>
-  </form>
+<div class="max-w-2xl mx-auto">
+  {% if is_new %}
+    <a href="{% url 'events:dashboard' %}" class="text-sm text-wood-600 hover:text-copper-600 inline-flex items-center gap-1.5 mb-4">
+      <i class="fa-solid fa-arrow-left"></i> Back to dashboard
+    </a>
+  {% else %}
+    <a href="{{ event.get_absolute_url }}" class="text-sm text-wood-600 hover:text-copper-600 inline-flex items-center gap-1.5 mb-4">
+      <i class="fa-solid fa-arrow-left"></i> Back to {{ event.title }}
+    </a>
+  {% endif %}
+
+  <div class="card !p-0 overflow-hidden">
+    {% include 'events/_event_form_fields.html' %}
+  </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'js/geolocation.js' %}"></script>
+<script src="{% static 'js/event_form.js' %}"></script>
 {% endblock %}

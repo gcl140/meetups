@@ -1,4 +1,4 @@
-{% if user %}Hi {{ user.first_name|default:user.username }},{% else %}Hi,{% endif %}
+{% if user %}Hi {{ user.first_name|default:user.display_name }},{% else %}Hi,{% endif %}
 
 You've been invited to "{{ event.title }}".
 

@@ -3,18 +3,26 @@
 {% block title %}Chat, {{ event.title }}{% endblock %}
 
 {% block content %}
-<div id="chat-root" data-event-slug="{{ event.slug }}" data-user-name="{{ user }}" class="max-w-2xl mx-auto card flex flex-col h-[70vh]">
+<div data-chat-widget data-event-slug="{{ event.slug }}" data-user-id="{{ user.id }}"
+     class="max-w-2xl mx-auto card flex flex-col h-[75vh]">
   <div class="flex items-center justify-between mb-3">
-    <h1 class="text-xl">💬 {{ event.title }}</h1>
-    <a href="{{ event.get_absolute_url }}" class="text-sm underline">Back to event</a>
+    <h1 class="text-xl"><i class="fa-solid fa-comments text-copper-500 mr-2"></i>{{ event.title }}</h1>
+    <a href="{{ event.get_absolute_url }}" class="text-sm underline"><i class="fa-solid fa-arrow-left mr-1"></i>Back to event</a>
   </div>
   <p class="text-xs text-wood-500 mb-3">Try <code>/help</code>, <code>/attendees</code>, <code>/schedule</code>, or <code>/actions</code>.</p>
 
-  <div id="chat-log" class="flex-1 overflow-y-auto flex flex-col gap-2 mb-3 pr-1"></div>
+  <button type="button" data-chat-older class="btn-outline btn-sm hidden mx-auto mb-2">Load older messages</button>
+  <div data-chat-log class="flex-1 overflow-y-auto flex flex-col gap-2 mb-3 pr-1"></div>
 
-  <form id="chat-form" class="flex gap-2">
-    <input id="chat-input" type="text" placeholder="Say something…" autocomplete="off" class="flex-1">
-    <button type="submit" class="btn-primary">Send</button>
+  <form data-chat-form class="relative flex items-center gap-2">
+    <div data-chat-emoji-panel class="hidden absolute bottom-12 left-0 flex flex-wrap gap-1 bg-white border border-wood-200 rounded-lg shadow-wood p-2 w-48"></div>
+    <button type="button" data-chat-emoji-btn class="btn-outline btn-sm !px-3" aria-label="Add emoji"><i class="fa-regular fa-face-smile"></i></button>
+    <label class="btn-outline btn-sm !px-3 cursor-pointer" aria-label="Attach file">
+      <i class="fa-solid fa-paperclip"></i>
+      <input type="file" data-chat-attach-input class="hidden" accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xlsx,.pptx">
+    </label>
+    <input data-chat-input type="text" placeholder="Say something…" autocomplete="off" class="flex-1">
+    <button type="submit" class="btn-primary"><i class="fa-solid fa-paper-plane"></i></button>
   </form>
 </div>
 {% endblock %}

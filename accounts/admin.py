@@ -1,16 +1,18 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
+from .forms import AdminUserCreationForm
 from .models import User
 
 
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
+    add_form = AdminUserCreationForm
     ordering = ['email']
-    list_display = ['email', 'username', 'first_name', 'last_name', 'is_staff']
-    search_fields = ['email', 'username', 'first_name', 'last_name']
+    list_display = ['email', 'first_name', 'last_name', 'is_staff']
+    search_fields = ['email', 'first_name', 'last_name']
     fieldsets = (
-        (None, {'fields': ('email', 'username', 'password')}),
+        (None, {'fields': ('email', 'password')}),
         ('Personal info', {'fields': ('first_name', 'last_name', 'phone', 'avatar')}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
@@ -18,6 +20,6 @@ class UserAdmin(DjangoUserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'username', 'password1', 'password2'),
+            'fields': ('email', 'password1', 'password2'),
         }),
     )

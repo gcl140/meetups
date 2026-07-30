@@ -23,7 +23,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const canToggle = isAdmin || String(record.user) === String(currentUserId);
     btn.disabled = !canToggle;
     btn.className = record.checked_in_at ? 'btn-primary btn-sm' : 'btn-outline btn-sm';
-    btn.textContent = record.checked_in_at ? 'Checked in ✓' : 'Check in';
+    btn.innerHTML = record.checked_in_at
+      ? '<i class="fa-solid fa-check"></i> Checked in'
+      : '<i class="fa-regular fa-circle"></i> Check in';
     if (canToggle) {
       btn.addEventListener('click', async () => {
         try {

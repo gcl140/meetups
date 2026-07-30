@@ -3,19 +3,15 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 from . import bot
 from .models import ChatMessage
-
-
-def _serialize(message):
-    return {
-        'id': message.id,
-        'sender': None if message.is_bot else (str(message.sender) if message.sender else 'Deleted user'),
-        'is_bot': message.is_bot,
-        'content': message.content,
-        'created_at': message.created_at.isoformat(),
-    }
+from .utils import serialize_message
 
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
+    """Live delivery only. Message history is loaded (and paginated) via
+    the REST API (see chat/api.py) so the initial page load and "load
+    older" both go through the same fetch()-based path instead of the
+    socket dumping a big backlog on connect."""
+
     async def connect(self):
         self.slug = self.scope['url_route']['kwargs']['slug']
         self.user = self.scope['user']
@@ -32,9 +28,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         self.group_name = f'chat_{self.event.id}'
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
-
-        history = await self.get_history()
-        await self.send_json({'type': 'history', 'messages': history})
 
     async def disconnect(self, code):
         if hasattr(self, 'group_name'):
@@ -54,8 +47,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             await self.broadcast(bot_message)
 
     async def broadcast(self, message):
+        payload = await self.serialize(message)
         await self.channel_layer.group_send(
-            self.group_name, {'type': 'chat.message', 'message': {'type': 'message', **_serialize(message)}},
+            self.group_name, {'type': 'chat.message', 'message': {'type': 'message', **payload}},
         )
 
     async def chat_message(self, event):
@@ -79,6 +73,5 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         return bot.handle_command(text, self.event)
 
     @database_sync_to_async
-    def get_history(self):
-        messages = ChatMessage.objects.filter(event=self.event).select_related('sender').order_by('-created_at')[:50]
-        return [_serialize(m) for m in reversed(messages)]
+    def serialize(self, message):
+        return serialize_message(message)

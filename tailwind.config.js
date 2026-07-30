@@ -3,8 +3,11 @@ module.exports = {
   content: [
     './templates/**/*.html',
     './accounts/**/*.html',
+    './accounts/**/*.py',
     './events/**/*.html',
+    './events/**/*.py',
     './chat/**/*.html',
+    './chat/**/*.py',
     './static/js/**/*.js',
   ],
   theme: {

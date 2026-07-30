@@ -251,3 +251,4 @@ npm-debug.log*
 # VSCode notes above, which follow the upstream template's opt-in convention)
 .vscode/
 .idea/
+junk/

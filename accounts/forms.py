@@ -9,7 +9,7 @@ class SignUpForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ('email', 'username', 'first_name', 'last_name', 'password1', 'password2')
+        fields = ('email', 'first_name', 'last_name', 'password1', 'password2')
 
     def clean_email(self):
         email = self.cleaned_data['email'].lower().strip()
@@ -22,3 +22,13 @@ class ProfileForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ('first_name', 'last_name', 'phone', 'avatar')
+
+
+class AdminUserCreationForm(UserCreationForm):
+    """Used by the Django admin's "add user" page. The stock
+    UserCreationForm only knows about `username`; ours needs `email`
+    instead since that's USERNAME_FIELD and username just mirrors it."""
+
+    class Meta:
+        model = User
+        fields = ('email',)

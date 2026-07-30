@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="max-w-md mx-auto card">
-  <h1 class="text-2xl mb-2">Create your account</h1>
+  <h1 class="text-2xl mb-2"><i class="fa-solid fa-user-plus text-copper-500 mr-2"></i>Create your account</h1>
   <p class="text-sm text-wood-600 mb-6">Reminders, invites and deadline emails all go to the email you use here.</p>
   <form method="post" class="space-y-4">
     {% csrf_token %}
@@ -15,7 +15,7 @@
         {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
       </div>
     {% endfor %}
-    <button type="submit" class="btn-primary w-full">Sign up</button>
+    <button type="submit" class="btn-primary w-full"><i class="fa-solid fa-user-plus"></i> Sign up</button>
   </form>
   <p class="text-sm text-wood-600 mt-4">
     Already have an account? <a href="{% url 'accounts:login' %}" class="underline">Log in</a>

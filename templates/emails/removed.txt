@@ -1,4 +1,4 @@
-Hi {{ user.first_name|default:user.username }},
+Hi {{ user.first_name|default:user.display_name }},
 
 You've been removed from "{{ event.title }}" by the event admin.
 

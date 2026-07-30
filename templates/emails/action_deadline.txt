@@ -1,4 +1,4 @@
-Hi {{ user.first_name|default:user.username }},
+Hi {{ user.first_name|default:user.display_name }},
 
 Action required for "{{ event.title }}": {{ action.title }}
 Deadline: {{ action.deadline }} (about {{ window_label }} from now)

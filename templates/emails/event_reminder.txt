@@ -1,4 +1,4 @@
-Hi {{ user.first_name|default:user.username }},
+Hi {{ user.first_name|default:user.display_name }},
 
 This is a reminder that "{{ event.title }}" starts in about {{ window_label }}.
 

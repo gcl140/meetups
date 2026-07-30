@@ -1,0 +1,11 @@
+Hi {{ user.first_name|default:user.display_name }},
+
+{{ changed_by.display_name }} just updated "{{ event.title }}":
+
+{% for change in changes %}- {{ change }}
+{% endfor %}
+View the event: {{ event_url }}
+
+An updated calendar file is attached.
+
+— Meetups

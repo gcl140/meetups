@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="max-w-md mx-auto card">
-  <h1 class="text-2xl mb-6">Welcome back</h1>
+  <h1 class="text-2xl mb-6"><i class="fa-solid fa-right-to-bracket text-copper-500 mr-2"></i>Welcome back</h1>
   <form method="post" class="space-y-4">
     {% csrf_token %}
     {% for field in form %}
@@ -14,7 +14,7 @@
       </div>
     {% endfor %}
     {% for error in form.non_field_errors %}<p class="field-error">{{ error }}</p>{% endfor %}
-    <button type="submit" class="btn-primary w-full">Log in</button>
+    <button type="submit" class="btn-primary w-full"><i class="fa-solid fa-right-to-bracket"></i> Log in</button>
   </form>
   <p class="text-sm text-wood-600 mt-4">
     No account yet? <a href="{% url 'accounts:signup' %}" class="underline">Sign up</a>

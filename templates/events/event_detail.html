@@ -5,9 +5,11 @@
 {% block content %}
 <div id="event-detail-root" data-event-slug="{{ event.slug }}" data-is-admin="{{ is_admin|yesno:'true,false' }}">
 
-  <div class="rounded-2xl overflow-hidden mb-6 event-cover-fallback h-56 flex items-end">
+  <div class="relative rounded-2xl overflow-hidden mb-6 event-cover-fallback h-56 flex items-end">
     {% if event.cover_image %}
-      <img src="{{ event.cover_image.url }}" alt="" class="w-full h-56 object-cover absolute">
+      <img src="{{ event.cover_image.url }}" alt="" class="absolute inset-0 w-full h-full object-cover">
+    {% else %}
+      <i class="fa-solid fa-campground text-cream-50/40 text-6xl absolute inset-0 flex items-center justify-center"></i>
     {% endif %}
   </div>
 
@@ -15,17 +17,17 @@
     <div>
       <div class="flex items-center gap-2 mb-1">
         <h1 class="text-3xl">{{ event.title }}</h1>
-        {% if event.is_open %}<span class="badge-open">Open</span>{% else %}<span class="badge-private">Private</span>{% endif %}
+        {% if event.is_open %}<span class="badge-open"><i class="fa-solid fa-globe mr-1"></i>Open</span>{% else %}<span class="badge-private"><i class="fa-solid fa-lock mr-1"></i>Private</span>{% endif %}
       </div>
-      <p class="text-wood-600">{{ event.start_datetime|date:"l, N j Y — H:i" }}{% if event.end_datetime %} to {{ event.end_datetime|date:"H:i" }}{% endif %}</p>
-      <p class="text-sm text-wood-500 mt-1">Admin: {{ event.admin }}</p>
+      <p class="text-wood-600"><i class="fa-regular fa-clock mr-1.5 text-copper-500"></i>{{ event.start_datetime|date:"l, N j Y — H:i" }}{% if event.end_datetime %} to {{ event.end_datetime|date:"H:i" }}{% endif %}</p>
+      <p class="text-sm text-wood-500 mt-1"><i class="fa-solid fa-star mr-1.5 text-copper-500"></i>Admin: {{ event.admin.display_name }}</p>
     </div>
 
     <div class="flex flex-wrap gap-2">
-      <a href="{% url 'events:export-ics' event.slug %}" class="btn-outline btn-sm">📅 Export .ics</a>
+      <a href="{% url 'events:export-ics' event.slug %}" class="btn-outline btn-sm"><i class="fa-solid fa-calendar-days"></i> Export .ics</a>
       {% if is_admin %}
-        <a href="{% url 'events:edit' event.slug %}" class="btn-outline btn-sm">Edit</a>
-        <a href="{% url 'events:delete' event.slug %}" class="btn-danger btn-sm">Delete</a>
+        <button type="button" id="edit-event-btn" class="btn-outline btn-sm"><i class="fa-solid fa-pen"></i> Edit</button>
+        <a href="{% url 'events:delete' event.slug %}" class="btn-danger btn-sm"><i class="fa-solid fa-trash"></i> Delete</a>
       {% endif %}
     </div>
   </div>
@@ -37,11 +39,11 @@
         <span id="my-rsvp-badge" class="badge-{{ membership.rsvp_status }}">{{ membership.get_rsvp_status_display }}</span>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button data-rsvp="going" class="{% if membership.rsvp_status == 'going' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Going</button>
-        <button data-rsvp="maybe" class="{% if membership.rsvp_status == 'maybe' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Maybe</button>
-        <button data-rsvp="not_going" class="{% if membership.rsvp_status == 'not_going' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Not going</button>
+        <button data-rsvp="going" class="{% if membership.rsvp_status == 'going' %}btn-primary{% else %}btn-outline{% endif %} btn-sm"><i class="fa-solid fa-check"></i> Going</button>
+        <button data-rsvp="maybe" class="{% if membership.rsvp_status == 'maybe' %}btn-primary{% else %}btn-outline{% endif %} btn-sm"><i class="fa-solid fa-question"></i> Maybe</button>
+        <button data-rsvp="not_going" class="{% if membership.rsvp_status == 'not_going' %}btn-primary{% else %}btn-outline{% endif %} btn-sm"><i class="fa-solid fa-xmark"></i> Not going</button>
         {% if not is_admin %}
-          <button id="leave-event-btn" class="btn-danger btn-sm">Leave event</button>
+          <button id="leave-event-btn" class="btn-danger btn-sm"><i class="fa-solid fa-door-open"></i> Leave event</button>
         {% endif %}
       </div>
     </div>
@@ -51,12 +53,12 @@
     <div class="lg:col-span-2 space-y-6">
 
       <section class="card">
-        <h2 class="text-lg mb-3">About</h2>
+        <h2 class="text-lg mb-3"><i class="fa-solid fa-align-left text-copper-500 mr-2"></i>About</h2>
         <p class="text-wood-700 whitespace-pre-line">{{ event.description|default:"No description yet." }}</p>
       </section>
 
       <section class="card">
-        <h2 class="text-lg mb-3">Location</h2>
+        <h2 class="text-lg mb-3"><i class="fa-solid fa-location-dot text-copper-500 mr-2"></i>Location</h2>
         {% if event.location_name or event.location_address %}
           <p class="text-wood-700">{{ event.location_name }}</p>
           <p class="text-sm text-wood-500 mb-3">{{ event.location_address }}</p>
@@ -64,108 +66,117 @@
           <p class="text-sm text-wood-500 mb-3">No location set yet.</p>
         {% endif %}
         {% if event.google_maps_url %}
-          <a href="{{ event.google_maps_url }}" target="_blank" class="btn-outline btn-sm inline-flex mb-4">🗺️ Open in Google Maps</a>
+          <a href="{{ event.google_maps_url }}" target="_blank" class="btn-outline btn-sm inline-flex mb-4"><i class="fa-solid fa-map-location-dot"></i> Open in Google Maps</a>
         {% endif %}
         {% if GOOGLE_MAPS_API_KEY and event.latitude is not None and event.longitude is not None %}
           <div id="map-canvas" class="w-full h-64 rounded-xl border border-wood-200"
                data-lat="{{ event.latitude }}" data-lng="{{ event.longitude }}" data-title="{{ event.title }}"></div>
+          <p id="map-fallback" class="hidden text-sm text-wood-500 bg-wood-50 border border-wood-200 rounded-xl p-4"></p>
         {% endif %}
       </section>
 
+      {% if is_admin or before_actions or after_actions %}
+        <section class="card">
+          {% if is_admin or before_actions %}
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-lg"><i class="fa-solid fa-list-check text-copper-500 mr-2"></i>Before the event</h2>
+            </div>
+            <ul id="actions-before" class="mb-4">
+              {% for a in before_actions %}
+                <li id="action-row-{{ a.id }}" class="flex items-center justify-between gap-3 py-2 border-b border-wood-100 last:border-0">
+                  <div>
+                    <p class="font-medium text-wood-900">{{ a.title }}</p>
+                    <p class="text-xs text-wood-500">Due {{ a.deadline|date:"M j, Y H:i" }}</p>
+                  </div>
+                  <div class="flex gap-2">
+                    <a href="{% url 'events:export-action-ics' event.slug a.id %}" class="btn-outline btn-sm"><i class="fa-solid fa-calendar-days"></i></a>
+                    {% if is_admin %}<button data-delete-action="{{ a.id }}" class="btn-outline btn-sm"><i class="fa-solid fa-trash"></i></button>{% endif %}
+                  </div>
+                </li>
+              {% empty %}
+                <li class="text-sm text-wood-500">Nothing to do yet.</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+
+          {% if is_admin or after_actions %}
+            <h2 class="text-lg mb-3"><i class="fa-solid fa-list-check text-copper-500 mr-2"></i>After the event</h2>
+            <ul id="actions-after" class="mb-4">
+              {% for a in after_actions %}
+                <li id="action-row-{{ a.id }}" class="flex items-center justify-between gap-3 py-2 border-b border-wood-100 last:border-0">
+                  <div>
+                    <p class="font-medium text-wood-900">{{ a.title }}</p>
+                    <p class="text-xs text-wood-500">Due {{ a.deadline|date:"M j, Y H:i" }}</p>
+                  </div>
+                  <div class="flex gap-2">
+                    <a href="{% url 'events:export-action-ics' event.slug a.id %}" class="btn-outline btn-sm"><i class="fa-solid fa-calendar-days"></i></a>
+                    {% if is_admin %}<button data-delete-action="{{ a.id }}" class="btn-outline btn-sm"><i class="fa-solid fa-trash"></i></button>{% endif %}
+                  </div>
+                </li>
+              {% empty %}
+                <li class="text-sm text-wood-500">Nothing to do yet.</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+
+          {% if is_admin %}
+            <form id="action-form" class="grid sm:grid-cols-2 gap-3 pt-3 border-t border-wood-100">
+              <input type="text" name="title" placeholder="Action title" required class="sm:col-span-2">
+              <select name="action_type">
+                <option value="before">Before the event</option>
+                <option value="after">After the event</option>
+              </select>
+              <input type="datetime-local" name="deadline" required>
+              <textarea name="description" placeholder="Details (optional)" class="sm:col-span-2" rows="2"></textarea>
+              <button type="submit" class="btn-secondary sm:col-span-2"><i class="fa-solid fa-plus"></i> Add action</button>
+            </form>
+          {% endif %}
+        </section>
+      {% endif %}
+
+      {% if is_admin or planning_calls %}
+        <section class="card">
+          <h2 class="text-lg mb-3"><i class="fa-solid fa-phone text-copper-500 mr-2"></i>Planning calls</h2>
+          <ul id="calls-list" class="mb-4">
+            {% for call in planning_calls %}
+              <li id="call-row-{{ call.id }}" class="flex items-center justify-between gap-3 py-2 border-b border-wood-100 last:border-0">
+                <div>
+                  <p class="font-medium text-wood-900">{{ call.title }}</p>
+                  <p class="text-xs text-wood-500">{{ call.scheduled_at|date:"M j, Y H:i" }}</p>
+                </div>
+                <div class="flex gap-2">
+                  {% if call.call_link %}<a href="{{ call.call_link }}" target="_blank" class="btn-outline btn-sm"><i class="fa-solid fa-video"></i> Join call</a>{% endif %}
+                  {% if is_admin %}<button data-delete-call="{{ call.id }}" class="btn-outline btn-sm"><i class="fa-solid fa-trash"></i></button>{% endif %}
+                </div>
+              </li>
+            {% empty %}
+              <li class="text-sm text-wood-500">No planning calls scheduled.</li>
+            {% endfor %}
+          </ul>
+          {% if is_admin %}
+            <form id="call-form" class="grid sm:grid-cols-2 gap-3 pt-3 border-t border-wood-100">
+              <input type="text" name="title" placeholder="Call title" required class="sm:col-span-2">
+              <input type="datetime-local" name="scheduled_at" required>
+              <input type="url" name="call_link" placeholder="Call link (Zoom, Meet…)">
+              <textarea name="description" placeholder="Agenda (optional)" class="sm:col-span-2" rows="2"></textarea>
+              <button type="submit" class="btn-secondary sm:col-span-2"><i class="fa-solid fa-plus"></i> Add planning call</button>
+            </form>
+          {% endif %}
+        </section>
+      {% endif %}
+
       <section class="card">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-lg">Before the event</h2>
-        </div>
-        <ul id="actions-before" class="mb-4">
-          {% for a in before_actions %}
-            <li id="action-row-{{ a.id }}" class="flex items-center justify-between gap-3 py-2 border-b border-wood-100 last:border-0">
-              <div>
-                <p class="font-medium text-wood-900">{{ a.title }}</p>
-                <p class="text-xs text-wood-500">Due {{ a.deadline|date:"M j, Y H:i" }}</p>
-              </div>
-              <div class="flex gap-2">
-                <a href="{% url 'events:export-action-ics' event.slug a.id %}" class="btn-outline btn-sm">.ics</a>
-                {% if is_admin %}<button data-delete-action="{{ a.id }}" class="btn-outline btn-sm">Delete</button>{% endif %}
-              </div>
-            </li>
-          {% empty %}
-            <li class="text-sm text-wood-500">Nothing to do yet.</li>
-          {% endfor %}
-        </ul>
-
-        <h2 class="text-lg mb-3">After the event</h2>
-        <ul id="actions-after" class="mb-4">
-          {% for a in after_actions %}
-            <li id="action-row-{{ a.id }}" class="flex items-center justify-between gap-3 py-2 border-b border-wood-100 last:border-0">
-              <div>
-                <p class="font-medium text-wood-900">{{ a.title }}</p>
-                <p class="text-xs text-wood-500">Due {{ a.deadline|date:"M j, Y H:i" }}</p>
-              </div>
-              <div class="flex gap-2">
-                <a href="{% url 'events:export-action-ics' event.slug a.id %}" class="btn-outline btn-sm">.ics</a>
-                {% if is_admin %}<button data-delete-action="{{ a.id }}" class="btn-outline btn-sm">Delete</button>{% endif %}
-              </div>
-            </li>
-          {% empty %}
-            <li class="text-sm text-wood-500">Nothing to do yet.</li>
-          {% endfor %}
-        </ul>
-
-        {% if is_admin %}
-          <form id="action-form" class="grid sm:grid-cols-2 gap-3 pt-3 border-t border-wood-100">
-            <input type="text" name="title" placeholder="Action title" required class="sm:col-span-2">
-            <select name="action_type">
-              <option value="before">Before the event</option>
-              <option value="after">After the event</option>
-            </select>
-            <input type="datetime-local" name="deadline" required>
-            <textarea name="description" placeholder="Details (optional)" class="sm:col-span-2" rows="2"></textarea>
-            <button type="submit" class="btn-secondary sm:col-span-2">Add action</button>
-          </form>
-        {% endif %}
-      </section>
-
-      <section class="card">
-        <h2 class="text-lg mb-3">Planning calls</h2>
-        <ul id="calls-list" class="mb-4">
-          {% for call in event.planning_calls.all %}
-            <li id="call-row-{{ call.id }}" class="flex items-center justify-between gap-3 py-2 border-b border-wood-100 last:border-0">
-              <div>
-                <p class="font-medium text-wood-900">{{ call.title }}</p>
-                <p class="text-xs text-wood-500">{{ call.scheduled_at|date:"M j, Y H:i" }}</p>
-              </div>
-              <div class="flex gap-2">
-                {% if call.call_link %}<a href="{{ call.call_link }}" target="_blank" class="btn-outline btn-sm">Join call</a>{% endif %}
-                {% if is_admin %}<button data-delete-call="{{ call.id }}" class="btn-outline btn-sm">Delete</button>{% endif %}
-              </div>
-            </li>
-          {% empty %}
-            <li class="text-sm text-wood-500">No planning calls scheduled.</li>
-          {% endfor %}
-        </ul>
-        {% if is_admin %}
-          <form id="call-form" class="grid sm:grid-cols-2 gap-3 pt-3 border-t border-wood-100">
-            <input type="text" name="title" placeholder="Call title" required class="sm:col-span-2">
-            <input type="datetime-local" name="scheduled_at" required>
-            <input type="url" name="call_link" placeholder="Call link (Zoom, Meet…)">
-            <textarea name="description" placeholder="Agenda (optional)" class="sm:col-span-2" rows="2"></textarea>
-            <button type="submit" class="btn-secondary sm:col-span-2">Add planning call</button>
-          </form>
-        {% endif %}
-      </section>
-
-      <section class="card">
-        <h2 class="text-lg mb-3">Photos &amp; links</h2>
+        <h2 class="text-lg mb-3"><i class="fa-solid fa-images text-copper-500 mr-2"></i>Photos &amp; links</h2>
         <div id="photo-gallery" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
           {% for photo in event.photos.all %}
             <div id="photo-card-{{ photo.id }}" class="relative rounded-xl overflow-hidden border border-wood-200">
               {% if photo.image %}
                 <img src="{{ photo.image.url }}" class="w-full h-32 object-cover">
               {% elif photo.external_url %}
-                <a href="{{ photo.external_url }}" target="_blank" class="block p-4 text-sm underline">{{ photo.caption|default:photo.external_url }}</a>
+                <a href="{{ photo.external_url }}" target="_blank" class="block p-4 text-sm underline"><i class="fa-solid fa-link mr-1"></i>{{ photo.caption|default:photo.external_url }}</a>
               {% endif %}
               {% if photo.uploaded_by_id == user.id or is_admin %}
-                <button data-delete-photo="{{ photo.id }}" class="absolute top-1 right-1 btn-danger btn-sm">✕</button>
+                <button data-delete-photo="{{ photo.id }}" class="absolute top-1 right-1 btn-danger btn-sm !px-2"><i class="fa-solid fa-xmark"></i></button>
               {% endif %}
             </div>
           {% empty %}
@@ -177,7 +188,7 @@
             <input type="file" name="image" accept="image/*">
             <input type="url" name="external_url" placeholder="Or paste an album link">
             <input type="text" name="caption" placeholder="Caption (optional)" class="sm:col-span-2">
-            <button type="submit" class="btn-secondary sm:col-span-2">Share photo</button>
+            <button type="submit" class="btn-secondary sm:col-span-2"><i class="fa-solid fa-plus"></i> Share photo</button>
           </form>
         {% endif %}
       </section>
@@ -186,50 +197,84 @@
 
     <div class="space-y-6">
       <section class="card">
-        <h2 class="text-lg mb-3">Members ({{ event.membership_set.count }})</h2>
+        <h2 class="text-lg mb-3"><i class="fa-solid fa-users text-copper-500 mr-2"></i>Members ({{ event.membership_set.count }})</h2>
         <ul class="space-y-2 mb-4">
           {% for m in event.membership_set.all %}
             <li id="member-row-{{ m.user.id }}" class="flex items-center justify-between gap-2">
               <div>
-                <p class="text-sm font-medium text-wood-900">{{ m.user }}</p>
+                <p class="text-sm font-medium text-wood-900">{{ m.user.display_name }}</p>
                 <span class="badge-{{ m.rsvp_status }}">{{ m.get_rsvp_status_display }}</span>
-                {% if m.user_id == event.admin_id %}<span class="badge-admin">Admin</span>{% endif %}
+                {% if m.user_id == event.admin_id %}<span class="badge-admin"><i class="fa-solid fa-star"></i> Admin</span>{% endif %}
               </div>
               {% if is_admin and m.user_id != event.admin_id %}
-                <button data-remove-user="{{ m.user.id }}" class="btn-outline btn-sm">Remove</button>
+                <button data-remove-user="{{ m.user.id }}" class="btn-outline btn-sm"><i class="fa-solid fa-user-minus"></i></button>
               {% endif %}
             </li>
           {% endfor %}
         </ul>
 
-        <a href="{% url 'chat:room' event.slug %}" class="btn-outline w-full mb-2">💬 Event chat</a>
         {% if membership %}
-          <a href="{% url 'events:attendance' event.slug %}" class="btn-outline w-full">✅ Attendance</a>
+          <a href="{% url 'events:attendance' event.slug %}" class="btn-outline w-full"><i class="fa-solid fa-clipboard-check"></i> Attendance</a>
         {% endif %}
       </section>
 
+      {% if membership %}
+        <section class="card">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg"><i class="fa-solid fa-comments text-copper-500 mr-2"></i>Chat</h2>
+            <a href="{% url 'chat:room' event.slug %}" class="text-sm underline">Open full chat <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></a>
+          </div>
+          <div data-chat-widget data-event-slug="{{ event.slug }}" data-user-id="{{ user.id }}" class="flex flex-col">
+            <button type="button" data-chat-older class="btn-outline btn-sm hidden mx-auto mb-2">Load older messages</button>
+            <div data-chat-log class="h-64 overflow-y-auto flex flex-col gap-2 mb-3 pr-1"></div>
+            <form data-chat-form class="relative flex items-center gap-1.5">
+              <div data-chat-emoji-panel class="hidden absolute bottom-11 left-0 flex flex-wrap gap-1 bg-white border border-wood-200 rounded-lg shadow-wood p-2 w-44 z-10"></div>
+              <button type="button" data-chat-emoji-btn class="btn-outline btn-sm !px-2.5" aria-label="Add emoji"><i class="fa-regular fa-face-smile"></i></button>
+              <label class="btn-outline btn-sm !px-2.5 cursor-pointer" aria-label="Attach file">
+                <i class="fa-solid fa-paperclip"></i>
+                <input type="file" data-chat-attach-input class="hidden" accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xlsx,.pptx">
+              </label>
+              <input data-chat-input type="text" placeholder="Say something…" autocomplete="off" class="flex-1">
+              <button type="submit" class="btn-primary !px-3"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+          </div>
+        </section>
+      {% endif %}
+
       {% if is_admin %}
         <section class="card">
-          <h2 class="text-lg mb-3">Invite people</h2>
+          <h2 class="text-lg mb-3"><i class="fa-solid fa-envelope-open-text text-copper-500 mr-2"></i>Invite people</h2>
           <form id="invite-form" class="flex gap-2">
             <input type="email" name="email" placeholder="friend@email.com" required>
-            <button type="submit" class="btn-secondary">Invite</button>
+            <button type="submit" class="btn-secondary"><i class="fa-solid fa-paper-plane"></i></button>
           </form>
           {% if not event.is_open %}
             <button id="copy-share-link" data-share-url="{{ request.scheme }}://{{ request.get_host }}{{ event.get_absolute_url }}?invite={{ event.share_token }}"
-                    class="btn-outline w-full mt-3">🔗 Copy share link</button>
+                    class="btn-outline w-full mt-3"><i class="fa-solid fa-link"></i> Copy share link</button>
           {% endif %}
         </section>
       {% endif %}
     </div>
   </div>
 </div>
+
+{% if is_admin %}
+  <dialog id="edit-event-modal" class="rounded-2xl p-0 border border-wood-200 shadow-wood bg-white w-[92vw] max-w-2xl max-h-[85vh] overflow-y-auto backdrop:bg-wood-950/60">
+    <div id="edit-event-modal-content"></div>
+  </dialog>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'js/event_detail.js' %}"></script>
+<script src="{% static 'js/chat.js' %}"></script>
+{% if is_admin %}
+  <script src="{% static 'js/geolocation.js' %}"></script>
+  <script src="{% static 'js/event_form.js' %}"></script>
+  <script src="{% static 'js/event_edit_modal.js' %}"></script>
+{% endif %}
 {% if GOOGLE_MAPS_API_KEY and event.latitude is not None and event.longitude is not None %}
   <script src="{% static 'js/maps.js' %}"></script>
-  <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&callback=initMap&loading=async" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&callback=initMap" async defer></script>
 {% endif %}
 {% endblock %}

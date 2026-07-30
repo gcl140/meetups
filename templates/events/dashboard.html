@@ -3,11 +3,11 @@
 {% block title %}Dashboard, Meetups{% endblock %}
 
 {% block content %}
-<h1 class="text-3xl mb-6">Hey {{ user.first_name|default:user.username }} 👋</h1>
+<h1 class="text-3xl mb-6">Hey {{ user.first_name|default:user.display_name }} 👋</h1>
 
 {% if has_any_events %}
   <section class="mb-10">
-    <h2 class="text-xl mb-4">Your upcoming events</h2>
+    <h2 class="text-xl mb-4"><i class="fa-solid fa-calendar-check text-copper-500 mr-2"></i>Your upcoming events</h2>
     {% if upcoming_memberships %}
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {% for m in upcoming_memberships %}
@@ -21,7 +21,7 @@
 
   {% if past_memberships %}
     <section class="mb-10">
-      <h2 class="text-xl mb-4">Past events</h2>
+      <h2 class="text-xl mb-4"><i class="fa-solid fa-clock-rotate-left text-copper-500 mr-2"></i>Past events</h2>
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 opacity-70">
         {% for m in past_memberships %}
           {% include 'events/_event_card.html' with event=m.event membership=m %}
@@ -31,14 +31,15 @@
   {% endif %}
 {% else %}
   <section class="card mb-10 text-center py-10">
+    <i class="fa-regular fa-compass text-4xl text-copper-400 mb-3"></i>
     <p class="text-lg font-medium text-wood-800">You're not invited to any events yet.</p>
     <p class="text-sm text-wood-500 mt-1">Browse open events below, or create your own.</p>
-    <a href="{% url 'events:create' %}" class="btn-primary inline-flex mt-5">Create an event</a>
+    <a href="{% url 'events:create' %}" class="btn-primary inline-flex mt-5"><i class="fa-solid fa-calendar-plus"></i> Create an event</a>
   </section>
 {% endif %}
 
 <section>
-  <h2 class="text-xl mb-4">Discover open events</h2>
+  <h2 class="text-xl mb-4"><i class="fa-solid fa-compass text-copper-500 mr-2"></i>Discover open events</h2>
   {% if open_events %}
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
       {% for event in open_events %}

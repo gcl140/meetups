@@ -135,3 +135,95 @@ def send_removed_email(event, user):
     )
     msg.attach_alternative(html_body, 'text/html')
     msg.send(fail_silently=True)
+
+
+# Fields worth telling attendees about when an admin edits an event, and
+# how to describe a change to each one in plain English.
+TRACKED_EVENT_FIELDS = [
+    'title', 'description', 'cover_image', 'visibility', 'capacity',
+    'location_name', 'location_address', 'start_datetime', 'end_datetime',
+]
+
+
+def snapshot_event_fields(event):
+    """Call before saving an edit form, so there's a pre-save value to
+    diff the freshly-saved instance against afterwards."""
+    return {field: getattr(event, field) for field in TRACKED_EVENT_FIELDS}
+
+
+def _format_datetime(value):
+    return value.strftime('%a, %b %d %Y %H:%M') if value else 'not set'
+
+
+def _truncate_to_minute(value):
+    # The edit form's datetime-local inputs only carry minute precision,
+    # so compare at that granularity or every resave of an unrelated field
+    # would falsely report the start/end time as "changed".
+    return value.replace(second=0, microsecond=0) if value else value
+
+
+def describe_event_changes(before, event):
+    changes = []
+
+    if before['title'] != event.title:
+        changes.append(f'Title changed to "{event.title}"')
+
+    if before['description'] != event.description:
+        changes.append('Description was updated')
+
+    if before['cover_image'] != event.cover_image:
+        changes.append('Cover image was updated')
+
+    if before['visibility'] != event.visibility:
+        changes.append(f'Visibility changed to {event.get_visibility_display()}')
+
+    if before['capacity'] != event.capacity:
+        changes.append(f'Capacity changed to {event.capacity if event.capacity else "unlimited"}')
+
+    if before['location_name'] != event.location_name or before['location_address'] != event.location_address:
+        location = event.location_name or event.location_address or 'not set'
+        changes.append(f'Location changed to {location}')
+
+    if _truncate_to_minute(before['start_datetime']) != _truncate_to_minute(event.start_datetime):
+        changes.append(f'Start time changed to {_format_datetime(event.start_datetime)}')
+
+    if _truncate_to_minute(before['end_datetime']) != _truncate_to_minute(event.end_datetime):
+        changes.append(f'End time changed to {_format_datetime(event.end_datetime)}')
+
+    return changes
+
+
+def send_event_updated_email(event, changes, changed_by):
+    """Emails everyone still engaged with the event (Going/Maybe/Invited --
+    not people who already said Not going) a summary of what changed,
+    with the refreshed .ics attached since dates/location may have moved."""
+    from .models import EventMembership
+
+    recipients = (
+        EventMembership.objects.filter(event=event)
+        .exclude(user=changed_by)
+        .exclude(rsvp_status=EventMembership.STATUS_NOT_GOING)
+        .select_related('user')
+    )
+    if not recipients:
+        return
+
+    ics_bytes = build_event_ics(event)
+    event_url = _absolute_url(event.get_absolute_url())
+
+    for membership in recipients:
+        context = {
+            'user': membership.user,
+            'event': event,
+            'changes': changes,
+            'changed_by': changed_by,
+            'event_url': event_url,
+        }
+        _send_email_with_ics(
+            to_email=membership.user.email,
+            subject=f'"{event.title}" was updated',
+            template_prefix='event_updated',
+            context=context,
+            ics_bytes=ics_bytes,
+            ics_filename=f'{event.slug}.ics',
+        )
