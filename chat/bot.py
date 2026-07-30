@@ -1,11 +1,11 @@
 """Rule-based bot commands for the event chat room. No external LLM/API
-calls — every command just reads the event's own data."""
+calls, every command just reads the event's own data."""
 
 from django.utils import timezone
 
 HELP_TEXT = (
-    "Commands: /help — this message · /attendees — who's going · "
-    "/schedule — upcoming planning calls · /actions — pending before/after-event actions"
+    "Commands: /help, this message · /attendees, who's going · "
+    "/schedule, upcoming planning calls · /actions, pending before/after-event actions"
 )
 
 

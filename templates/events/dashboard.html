@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Dashboard — Meetups{% endblock %}
+{% block title %}Dashboard, Meetups{% endblock %}
 
 {% block content %}
 <h1 class="text-3xl mb-6">Hey {{ user.first_name|default:user.username }} 👋</h1>
@@ -46,7 +46,7 @@
       {% endfor %}
     </div>
   {% else %}
-    <p class="text-wood-500 text-sm">No open events right now — check back later.</p>
+    <p class="text-wood-500 text-sm">No open events right now, check back later.</p>
   {% endif %}
 </section>
 {% endblock %}

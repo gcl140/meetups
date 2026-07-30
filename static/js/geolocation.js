@@ -1,5 +1,5 @@
 // Event form: "Use my location" fills the lat/lng fields via the
-// browser's geolocation API — no Google Maps API key needed for this part.
+// browser's geolocation API, no Google Maps API key needed for this part.
 
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('use-my-location');

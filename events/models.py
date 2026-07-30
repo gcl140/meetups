@@ -252,7 +252,7 @@ class ReminderLog(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     event_action = models.ForeignKey(EventAction, on_delete=models.CASCADE, blank=True, null=True)
     reminder_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-    window_label = models.CharField(max_length=20, help_text='e.g. "24h", "1h" — dedupes per reminder window.')
+    window_label = models.CharField(max_length=20, help_text='e.g. "24h", "1h", dedupes per reminder window.')
     sent_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

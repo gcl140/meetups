@@ -1,6 +1,6 @@
 // Event detail page: RSVP, leave, admin invite/remove, actions, photos and
 // planning calls all go through the API so none of these require a full
-// page reload — the DOM is patched in place after each call succeeds.
+// page reload, the DOM is patched in place after each call succeeds.
 
 document.addEventListener('DOMContentLoaded', () => {
   const root = document.getElementById('event-detail-root');

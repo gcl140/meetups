@@ -1,6 +1,6 @@
 // Embedded Google Map on the event detail page. Only loaded when the
 // template has both a GOOGLE_MAPS_API_KEY configured and the event has
-// lat/lng set — see events/event_detail.html for the conditional script tag.
+// lat/lng set, see events/event_detail.html for the conditional script tag.
 
 function initMap() {
   const el = document.getElementById('map-canvas');

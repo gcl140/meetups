@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}{{ event.title }} — Meetups{% endblock %}
+{% block title %}{{ event.title }}, Meetups{% endblock %}
 
 {% block content %}
 <div id="event-detail-root" data-event-slug="{{ event.slug }}" data-is-admin="{{ is_admin|yesno:'true,false' }}">

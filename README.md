@@ -1,26 +1,26 @@
 # Meetups
 
 Event-based groups: create an event, invite people, track RSVPs, share photos,
-sync deadlines to a calendar, and chat in real time — all in one place.
+sync deadlines to a calendar, and chat in real time, all in one place.
 
 ## Features
 
-- **Event groups** — one admin per event, optional capacity limit, private
+- **Event groups**, one admin per event, optional capacity limit, private
   (invite-only) or open (public) visibility.
-- **RSVP** — Going / Maybe / Not going, tracked per member.
-- **Invites** — by email, whether or not the person has an account yet; a
+- **RSVP**, Going / Maybe / Not going, tracked per member.
+- **Invites**, by email, whether or not the person has an account yet; a
   shareable invite link for private events.
-- **Before/after-event actions** — deadline-based to-dos with their own
+- **Before/after-event actions**, deadline-based to-dos with their own
   `.ics` export and deadline reminder emails.
-- **Calendar sync** — export any event (or action deadline) as `.ics`;
+- **Calendar sync**, export any event (or action deadline) as `.ics`;
   reminder/deadline emails include the same file as an attachment.
 - **Planning calls** and an **attendance tracker** (self or admin check-in).
 - **Photo & link sharing** per event.
 - **Real-time chat** per event over Django Channels WebSockets, with a
   rule-based bot (`/help`, `/attendees`, `/schedule`, `/actions`).
-- **Location** — address + "Open in Google Maps" link, browser-geolocation
+- **Location**, address + "Open in Google Maps" link, browser-geolocation
   "use my location" button, and an optional embedded Google Map.
-- **Dashboard** — your events, or (if you're not part of any) a prompt to
+- **Dashboard**, your events, or (if you're not part of any) a prompt to
   browse open events.
 
 ## Stack
@@ -55,11 +55,11 @@ While iterating on styles, run `npm run watch:css` in a second terminal.
 
 See `.env.example`. Notable ones:
 
-- `EMAIL_BACKEND` — defaults to the console backend in debug mode, so
+- `EMAIL_BACKEND`, defaults to the console backend in debug mode, so
   invite/reminder/deadline emails print to the terminal instead of sending.
-- `GOOGLE_MAPS_API_KEY` — optional. Without it, event pages still show an
+- `GOOGLE_MAPS_API_KEY`, optional. Without it, event pages still show an
   "Open in Google Maps" link; with it, an embedded map also renders.
-- `REMINDER_POLL_MINUTES` — how often the in-process scheduler checks for
+- `REMINDER_POLL_MINUTES`, how often the in-process scheduler checks for
   reminder/deadline emails to send (default 5).
 
 ### Tests

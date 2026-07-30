@@ -176,7 +176,7 @@ REST_FRAMEWORK = {
 }
 
 
-# Google Maps (optional — event pages degrade gracefully without it)
+# Google Maps (optional, event pages degrade gracefully without it)
 
 GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
 

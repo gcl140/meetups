@@ -140,7 +140,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('reminder_type', models.CharField(choices=[('event_upcoming', 'Event upcoming'), ('action_deadline', 'Action deadline')], max_length=20)),
-                ('window_label', models.CharField(help_text='e.g. "24h", "1h" — dedupes per reminder window.', max_length=20)),
+                ('window_label', models.CharField(help_text='e.g. "24h", "1h", dedupes per reminder window.', max_length=20)),
                 ('sent_at', models.DateTimeField(auto_now_add=True)),
                 ('event', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='events.event')),
                 ('event_action', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='events.eventaction')),
