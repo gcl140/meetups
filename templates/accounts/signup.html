@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Sign up — Meetups{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto card">
+  <h1 class="text-2xl mb-2">Create your account</h1>
+  <p class="text-sm text-wood-600 mb-6">Reminders, invites and deadline emails all go to the email you use here.</p>
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+    {% for field in form %}
+      <div>
+        <label class="field-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<p class="field-hint">{{ field.help_text }}</p>{% endif %}
+        {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="btn-primary w-full">Sign up</button>
+  </form>
+  <p class="text-sm text-wood-600 mt-4">
+    Already have an account? <a href="{% url 'accounts:login' %}" class="underline">Log in</a>
+  </p>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Dashboard — Meetups{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl mb-6">Hey {{ user.first_name|default:user.username }} 👋</h1>
+
+{% if has_any_events %}
+  <section class="mb-10">
+    <h2 class="text-xl mb-4">Your upcoming events</h2>
+    {% if upcoming_memberships %}
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {% for m in upcoming_memberships %}
+          {% include 'events/_event_card.html' with event=m.event membership=m %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-wood-500 text-sm">Nothing upcoming right now.</p>
+    {% endif %}
+  </section>
+
+  {% if past_memberships %}
+    <section class="mb-10">
+      <h2 class="text-xl mb-4">Past events</h2>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 opacity-70">
+        {% for m in past_memberships %}
+          {% include 'events/_event_card.html' with event=m.event membership=m %}
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+{% else %}
+  <section class="card mb-10 text-center py-10">
+    <p class="text-lg font-medium text-wood-800">You're not invited to any events yet.</p>
+    <p class="text-sm text-wood-500 mt-1">Browse open events below, or create your own.</p>
+    <a href="{% url 'events:create' %}" class="btn-primary inline-flex mt-5">Create an event</a>
+  </section>
+{% endif %}
+
+<section>
+  <h2 class="text-xl mb-4">Discover open events</h2>
+  {% if open_events %}
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {% for event in open_events %}
+        {% include 'events/_event_card.html' with event=event show_join=True %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-wood-500 text-sm">No open events right now — check back later.</p>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}

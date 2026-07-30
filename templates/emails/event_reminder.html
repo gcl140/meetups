@@ -1,0 +1,12 @@
+<div style="font-family: Georgia, serif; background:#faf6f1; padding:24px; color:#331f13;">
+  <div style="max-width:480px; margin:0 auto; background:#ffffff; border-radius:16px; padding:24px; border:1px solid #e4cdb0;">
+    <h2 style="color:#4d2f1c; margin-top:0;">⏰ {{ event.title }} starts in {{ window_label }}</h2>
+    <p>Hi {{ user.first_name|default:user.username }},</p>
+    <p><strong>When:</strong> {{ event.start_datetime }}<br>
+       <strong>Where:</strong> {{ event.location_name|default:event.location_address|default:"TBD" }}</p>
+    <p style="margin:24px 0;">
+      <a href="{{ event_url }}" style="background:#6b4327; color:#fffaf3; padding:10px 18px; border-radius:8px; text-decoration:none;">View event</a>
+    </p>
+    <p style="font-size:13px; color:#8a5732;">A calendar file is attached — open it to add this to your calendar.</p>
+  </div>
+</div>

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% if is_new %}New event{% else %}Edit {{ event.title }}{% endif %} — Meetups{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto card">
+  <h1 class="text-2xl mb-6">{% if is_new %}Create an event{% else %}Edit event{% endif %}</h1>
+  <form method="post" enctype="multipart/form-data" class="space-y-4">
+    {% csrf_token %}
+    {% for field in form %}
+      <div>
+        <label class="field-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<p class="field-hint">{{ field.help_text }}</p>{% endif %}
+        {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+      {% if field.name == 'location_address' %}
+        <button type="button" id="use-my-location" class="btn-outline btn-sm">📍 Use my location</button>
+      {% endif %}
+    {% endfor %}
+    <button type="submit" class="btn-primary w-full">{% if is_new %}Create event{% else %}Save changes{% endif %}</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/geolocation.js' %}"></script>
+{% endblock %}

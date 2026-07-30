@@ -1,0 +1,12 @@
+Hi {{ user.first_name|default:user.username }},
+
+This is a reminder that "{{ event.title }}" starts in about {{ window_label }}.
+
+When: {{ event.start_datetime }}
+Where: {{ event.location_name|default:event.location_address }}
+
+View the event: {{ event_url }}
+
+A calendar file is attached so you can add it to your calendar app.
+
+— Meetups

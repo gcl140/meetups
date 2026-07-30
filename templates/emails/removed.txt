@@ -1,0 +1,7 @@
+Hi {{ user.first_name|default:user.username }},
+
+You've been removed from "{{ event.title }}" by the event admin.
+
+If you think this was a mistake, reach out to the event admin directly.
+
+— Meetups

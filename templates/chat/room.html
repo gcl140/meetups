@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Chat — {{ event.title }}{% endblock %}
+
+{% block content %}
+<div id="chat-root" data-event-slug="{{ event.slug }}" data-user-name="{{ user }}" class="max-w-2xl mx-auto card flex flex-col h-[70vh]">
+  <div class="flex items-center justify-between mb-3">
+    <h1 class="text-xl">💬 {{ event.title }}</h1>
+    <a href="{{ event.get_absolute_url }}" class="text-sm underline">Back to event</a>
+  </div>
+  <p class="text-xs text-wood-500 mb-3">Try <code>/help</code>, <code>/attendees</code>, <code>/schedule</code>, or <code>/actions</code>.</p>
+
+  <div id="chat-log" class="flex-1 overflow-y-auto flex flex-col gap-2 mb-3 pr-1"></div>
+
+  <form id="chat-form" class="flex gap-2">
+    <input id="chat-input" type="text" placeholder="Say something…" autocomplete="off" class="flex-1">
+    <button type="submit" class="btn-primary">Send</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/chat.js' %}"></script>
+{% endblock %}

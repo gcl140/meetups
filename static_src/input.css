@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-cream-50 text-wood-900 font-body;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display text-wood-900;
+  }
+  a {
+    @apply text-copper-600 hover:text-copper-500;
+  }
+  input[type="text"], input[type="email"], input[type="password"], input[type="number"],
+  input[type="url"], input[type="tel"], input[type="datetime-local"], input[type="date"],
+  textarea, select {
+    @apply field-input;
+  }
+  input[type="file"] {
+    @apply text-sm text-wood-700 file:mr-3 file:rounded-lg file:border-0 file:bg-wood-100
+           file:px-3 file:py-2 file:text-sm file:font-medium file:text-wood-800 hover:file:bg-wood-200;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium
+           transition-colors duration-150 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-wood-700 text-cream-50 hover:bg-wood-800;
+  }
+  .btn-secondary {
+    @apply btn bg-wood-100 text-wood-800 hover:bg-wood-200;
+  }
+  .btn-outline {
+    @apply btn border border-wood-300 text-wood-800 bg-transparent hover:bg-wood-100;
+  }
+  .btn-danger {
+    @apply btn bg-red-700 text-cream-50 hover:bg-red-800;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  .card {
+    @apply bg-white/80 border border-wood-200 rounded-2xl shadow-wood p-6;
+  }
+
+  .field-label {
+    @apply block text-sm font-medium text-wood-800 mb-1;
+  }
+  .field-input {
+    @apply w-full rounded-lg border border-wood-300 bg-white px-3 py-2 text-sm
+           text-wood-900 placeholder-wood-400 focus:outline-none focus:ring-2 focus:ring-copper-500 focus:border-copper-500;
+  }
+  .field-hint {
+    @apply text-xs text-wood-500 mt-1;
+  }
+  .field-error {
+    @apply text-xs text-red-700 mt-1;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .badge-going { @apply badge bg-green-100 text-green-800; }
+  .badge-maybe { @apply badge bg-amber-100 text-amber-800; }
+  .badge-not_going { @apply badge bg-red-100 text-red-800; }
+  .badge-invited { @apply badge bg-wood-100 text-wood-700; }
+  .badge-admin { @apply badge bg-copper-500/20 text-copper-600; }
+  .badge-open { @apply badge bg-copper-500/20 text-copper-700; }
+  .badge-private { @apply badge bg-wood-200 text-wood-700; }
+
+  .nav-link {
+    @apply text-wood-100 hover:text-white transition-colors text-sm font-medium;
+  }
+
+  .toast {
+    @apply fixed bottom-5 right-5 z-50 max-w-sm rounded-xl px-4 py-3 shadow-wood text-sm font-medium text-cream-50;
+  }
+  .toast-success { @apply toast bg-wood-800; }
+  .toast-error { @apply toast bg-red-700; }
+}

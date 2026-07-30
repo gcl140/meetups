@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Delete {{ event.title }} — Meetups{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto card">
+  <h1 class="text-2xl mb-4">Delete "{{ event.title }}"?</h1>
+  <p class="text-sm text-wood-600 mb-6">This removes the event, its members, actions, photos and chat history for everyone. This can't be undone.</p>
+  <form method="post" class="flex gap-3">
+    {% csrf_token %}
+    <button type="submit" class="btn-danger flex-1">Yes, delete it</button>
+    <a href="{{ event.get_absolute_url }}" class="btn-outline flex-1 text-center">Cancel</a>
+  </form>
+</div>
+{% endblock %}

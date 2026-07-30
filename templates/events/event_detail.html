@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ event.title }} — Meetups{% endblock %}
+
+{% block content %}
+<div id="event-detail-root" data-event-slug="{{ event.slug }}" data-is-admin="{{ is_admin|yesno:'true,false' }}">
+
+  <div class="rounded-2xl overflow-hidden mb-6 event-cover-fallback h-56 flex items-end">
+    {% if event.cover_image %}
+      <img src="{{ event.cover_image.url }}" alt="" class="w-full h-56 object-cover absolute">
+    {% endif %}
+  </div>
+
+  <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <h1 class="text-3xl">{{ event.title }}</h1>
+        {% if event.is_open %}<span class="badge-open">Open</span>{% else %}<span class="badge-private">Private</span>{% endif %}
+      </div>
+      <p class="text-wood-600">{{ event.start_datetime|date:"l, N j Y — H:i" }}{% if event.end_datetime %} to {{ event.end_datetime|date:"H:i" }}{% endif %}</p>
+      <p class="text-sm text-wood-500 mt-1">Admin: {{ event.admin }}</p>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <a href="{% url 'events:export-ics' event.slug %}" class="btn-outline btn-sm">📅 Export .ics</a>
+      {% if is_admin %}
+        <a href="{% url 'events:edit' event.slug %}" class="btn-outline btn-sm">Edit</a>
+        <a href="{% url 'events:delete' event.slug %}" class="btn-danger btn-sm">Delete</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if membership %}
+    <div class="card mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-wood-600">Your RSVP:</span>
+        <span id="my-rsvp-badge" class="badge-{{ membership.rsvp_status }}">{{ membership.get_rsvp_status_display }}</span>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button data-rsvp="going" class="{% if membership.rsvp_status == 'going' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Going</button>
+        <button data-rsvp="maybe" class="{% if membership.rsvp_status == 'maybe' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Maybe</button>
+        <button data-rsvp="not_going" class="{% if membership.rsvp_status == 'not_going' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Not going</button>
+        {% if not is_admin %}
+          <button id="leave-event-btn" class="btn-danger btn-sm">Leave event</button>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="grid lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+
+      <section class="card">
+        <h2 class="text-lg mb-3">About</h2>
+        <p class="text-wood-700 whitespace-pre-line">{{ event.description|default:"No description yet." }}</p>
+      </section>
+
+      <section class="card">
+        <h2 class="text-lg mb-3">Location</h2>
+        {% if event.location_name or event.location_address %}
+          <p class="text-wood-700">{{ event.location_name }}</p>
+          <p class="text-sm text-wood-500 mb-3">{{ event.location_address }}</p>
+        {% else %}
+          <p class="text-sm text-wood-500 mb-3">No location set yet.</p>
+        {% endif %}
+        {% if event.google_maps_url %}
+          <a href="{{ event.google_maps_url }}" target="_blank" class="btn-outline btn-sm inline-flex mb-4">🗺️ Open in Google Maps</a>
+        {% endif %}
+        {% if GOOGLE_MAPS_API_KEY and event.latitude is not None and event.longitude is not None %}
+          <div id="map-canvas" class="w-full h-64 rounded-xl border border-wood-200"
+               data-lat="{{ event.latitude }}" data-lng="{{ event.longitude }}" data-title="{{ event.title }}"></div>
+        {% endif %}
+      </section>
+
+      <section class="card">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-lg">Before the event</h2>
+        </div>
+        <ul id="actions-before" class="mb-4">
+          {% for a in before_actions %}
+            <li id="action-row-{{ a.id }}" class="flex items-center justify-between gap-3 py-2 border-b border-wood-100 last:border-0">
+              <div>
+                <p class="font-medium text-wood-900">{{ a.title }}</p>
+                <p class="text-xs text-wood-500">Due {{ a.deadline|date:"M j, Y H:i" }}</p>
+              </div>
+              <div class="flex gap-2">
+                <a href="{% url 'events:export-action-ics' event.slug a.id %}" class="btn-outline btn-sm">.ics</a>
+                {% if is_admin %}<button data-delete-action="{{ a.id }}" class="btn-outline btn-sm">Delete</button>{% endif %}
+              </div>
+            </li>
+          {% empty %}
+            <li class="text-sm text-wood-500">Nothing to do yet.</li>
+          {% endfor %}
+        </ul>
+
+        <h2 class="text-lg mb-3">After the event</h2>
+        <ul id="actions-after" class="mb-4">
+          {% for a in after_actions %}
+            <li id="action-row-{{ a.id }}" class="flex items-center justify-between gap-3 py-2 border-b border-wood-100 last:border-0">
+              <div>
+                <p class="font-medium text-wood-900">{{ a.title }}</p>
+                <p class="text-xs text-wood-500">Due {{ a.deadline|date:"M j, Y H:i" }}</p>
+              </div>
+              <div class="flex gap-2">
+                <a href="{% url 'events:export-action-ics' event.slug a.id %}" class="btn-outline btn-sm">.ics</a>
+                {% if is_admin %}<button data-delete-action="{{ a.id }}" class="btn-outline btn-sm">Delete</button>{% endif %}
+              </div>
+            </li>
+          {% empty %}
+            <li class="text-sm text-wood-500">Nothing to do yet.</li>
+          {% endfor %}
+        </ul>
+
+        {% if is_admin %}
+          <form id="action-form" class="grid sm:grid-cols-2 gap-3 pt-3 border-t border-wood-100">
+            <input type="text" name="title" placeholder="Action title" required class="sm:col-span-2">
+            <select name="action_type">
+              <option value="before">Before the event</option>
+              <option value="after">After the event</option>
+            </select>
+            <input type="datetime-local" name="deadline" required>
+            <textarea name="description" placeholder="Details (optional)" class="sm:col-span-2" rows="2"></textarea>
+            <button type="submit" class="btn-secondary sm:col-span-2">Add action</button>
+          </form>
+        {% endif %}
+      </section>
+
+      <section class="card">
+        <h2 class="text-lg mb-3">Planning calls</h2>
+        <ul id="calls-list" class="mb-4">
+          {% for call in event.planning_calls.all %}
+            <li id="call-row-{{ call.id }}" class="flex items-center justify-between gap-3 py-2 border-b border-wood-100 last:border-0">
+              <div>
+                <p class="font-medium text-wood-900">{{ call.title }}</p>
+                <p class="text-xs text-wood-500">{{ call.scheduled_at|date:"M j, Y H:i" }}</p>
+              </div>
+              <div class="flex gap-2">
+                {% if call.call_link %}<a href="{{ call.call_link }}" target="_blank" class="btn-outline btn-sm">Join call</a>{% endif %}
+                {% if is_admin %}<button data-delete-call="{{ call.id }}" class="btn-outline btn-sm">Delete</button>{% endif %}
+              </div>
+            </li>
+          {% empty %}
+            <li class="text-sm text-wood-500">No planning calls scheduled.</li>
+          {% endfor %}
+        </ul>
+        {% if is_admin %}
+          <form id="call-form" class="grid sm:grid-cols-2 gap-3 pt-3 border-t border-wood-100">
+            <input type="text" name="title" placeholder="Call title" required class="sm:col-span-2">
+            <input type="datetime-local" name="scheduled_at" required>
+            <input type="url" name="call_link" placeholder="Call link (Zoom, Meet…)">
+            <textarea name="description" placeholder="Agenda (optional)" class="sm:col-span-2" rows="2"></textarea>
+            <button type="submit" class="btn-secondary sm:col-span-2">Add planning call</button>
+          </form>
+        {% endif %}
+      </section>
+
+      <section class="card">
+        <h2 class="text-lg mb-3">Photos &amp; links</h2>
+        <div id="photo-gallery" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+          {% for photo in event.photos.all %}
+            <div id="photo-card-{{ photo.id }}" class="relative rounded-xl overflow-hidden border border-wood-200">
+              {% if photo.image %}
+                <img src="{{ photo.image.url }}" class="w-full h-32 object-cover">
+              {% elif photo.external_url %}
+                <a href="{{ photo.external_url }}" target="_blank" class="block p-4 text-sm underline">{{ photo.caption|default:photo.external_url }}</a>
+              {% endif %}
+              {% if photo.uploaded_by_id == user.id or is_admin %}
+                <button data-delete-photo="{{ photo.id }}" class="absolute top-1 right-1 btn-danger btn-sm">✕</button>
+              {% endif %}
+            </div>
+          {% empty %}
+            <p class="text-sm text-wood-500 col-span-full">No photos shared yet.</p>
+          {% endfor %}
+        </div>
+        {% if membership %}
+          <form id="photo-form" class="grid sm:grid-cols-2 gap-3 pt-3 border-t border-wood-100" enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/*">
+            <input type="url" name="external_url" placeholder="Or paste an album link">
+            <input type="text" name="caption" placeholder="Caption (optional)" class="sm:col-span-2">
+            <button type="submit" class="btn-secondary sm:col-span-2">Share photo</button>
+          </form>
+        {% endif %}
+      </section>
+
+    </div>
+
+    <div class="space-y-6">
+      <section class="card">
+        <h2 class="text-lg mb-3">Members ({{ event.membership_set.count }})</h2>
+        <ul class="space-y-2 mb-4">
+          {% for m in event.membership_set.all %}
+            <li id="member-row-{{ m.user.id }}" class="flex items-center justify-between gap-2">
+              <div>
+                <p class="text-sm font-medium text-wood-900">{{ m.user }}</p>
+                <span class="badge-{{ m.rsvp_status }}">{{ m.get_rsvp_status_display }}</span>
+                {% if m.user_id == event.admin_id %}<span class="badge-admin">Admin</span>{% endif %}
+              </div>
+              {% if is_admin and m.user_id != event.admin_id %}
+                <button data-remove-user="{{ m.user.id }}" class="btn-outline btn-sm">Remove</button>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+
+        <a href="{% url 'chat:room' event.slug %}" class="btn-outline w-full mb-2">💬 Event chat</a>
+        {% if membership %}
+          <a href="{% url 'events:attendance' event.slug %}" class="btn-outline w-full">✅ Attendance</a>
+        {% endif %}
+      </section>
+
+      {% if is_admin %}
+        <section class="card">
+          <h2 class="text-lg mb-3">Invite people</h2>
+          <form id="invite-form" class="flex gap-2">
+            <input type="email" name="email" placeholder="friend@email.com" required>
+            <button type="submit" class="btn-secondary">Invite</button>
+          </form>
+          {% if not event.is_open %}
+            <button id="copy-share-link" data-share-url="{{ request.scheme }}://{{ request.get_host }}{{ event.get_absolute_url }}?invite={{ event.share_token }}"
+                    class="btn-outline w-full mt-3">🔗 Copy share link</button>
+          {% endif %}
+        </section>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/event_detail.js' %}"></script>
+{% if GOOGLE_MAPS_API_KEY and event.latitude is not None and event.longitude is not None %}
+  <script src="{% static 'js/maps.js' %}"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&callback=initMap&loading=async" async defer></script>
+{% endif %}
+{% endblock %}

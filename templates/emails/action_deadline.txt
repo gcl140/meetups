@@ -1,0 +1,12 @@
+Hi {{ user.first_name|default:user.username }},
+
+Action required for "{{ event.title }}": {{ action.title }}
+Deadline: {{ action.deadline }} (about {{ window_label }} from now)
+
+{{ action.description }}
+
+View the event: {{ event_url }}
+
+A calendar file with this deadline is attached.
+
+— Meetups

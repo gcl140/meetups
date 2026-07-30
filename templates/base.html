@@ -1,0 +1,60 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Meetups{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+  <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+</head>
+<body class="min-h-screen flex flex-col">
+  {% csrf_token %}
+
+  <nav class="bg-wood-900 shadow-wood">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <a href="{% url 'events:dashboard' %}" class="font-display text-xl font-semibold text-cream-50">
+        🪵 Meetups
+      </a>
+      <div class="flex items-center gap-5">
+        {% if user.is_authenticated %}
+          <a href="{% url 'events:dashboard' %}" class="nav-link">Dashboard</a>
+          <a href="{% url 'events:create' %}" class="nav-link">New event</a>
+          <a href="{% url 'accounts:profile' %}" class="nav-link">{{ user }}</a>
+          <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="nav-link">Logout</button>
+          </form>
+        {% else %}
+          <a href="{% url 'accounts:login' %}" class="nav-link">Login</a>
+          <a href="{% url 'accounts:signup' %}" class="nav-link">Sign up</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  {% if messages %}
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-4 space-y-2">
+      {% for message in messages %}
+        <div class="rounded-lg px-4 py-2 text-sm {% if message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-wood-100 text-wood-800{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="text-center text-xs text-wood-500 py-6">
+    Meetups &mdash; event-based groups, done simply.
+  </footer>
+
+  <script src="{% static 'js/api.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

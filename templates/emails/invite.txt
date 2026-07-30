@@ -1,0 +1,14 @@
+{% if user %}Hi {{ user.first_name|default:user.username }},{% else %}Hi,{% endif %}
+
+You've been invited to "{{ event.title }}".
+
+{{ event.description }}
+
+When: {{ event.start_datetime }}
+Where: {{ event.location_name|default:event.location_address }}
+
+{% if signup_url %}Create your account to respond: {{ signup_url }}{% else %}View and RSVP: {{ event_url }}{% endif %}
+
+A calendar file for this event is attached.
+
+— Meetups

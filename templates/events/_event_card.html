@@ -1,0 +1,30 @@
+{% load static %}
+<div class="card flex flex-col overflow-hidden !p-0">
+  <a href="{{ event.get_absolute_url }}" class="block h-32 event-cover-fallback">
+    {% if event.cover_image %}
+      <img src="{{ event.cover_image.url }}" alt="" class="w-full h-32 object-cover">
+    {% endif %}
+  </a>
+  <div class="p-5 flex flex-col gap-2 flex-1">
+    <div class="flex items-start justify-between gap-2">
+      <a href="{{ event.get_absolute_url }}" class="font-display text-lg font-semibold text-wood-900 hover:text-copper-600">
+        {{ event.title }}
+      </a>
+      {% if event.is_open %}<span class="badge-open">Open</span>{% else %}<span class="badge-private">Private</span>{% endif %}
+    </div>
+    <p class="text-sm text-wood-500">{{ event.start_datetime|date:"D, M j Y — H:i" }}</p>
+    {% if event.location_name %}<p class="text-sm text-wood-500">📍 {{ event.location_name }}</p>{% endif %}
+
+    <div class="mt-auto flex items-center justify-between pt-3">
+      {% if membership %}
+        <span class="badge-{{ membership.rsvp_status }}">{{ membership.get_rsvp_status_display }}</span>
+      {% else %}
+        <span class="text-xs text-wood-500">{{ event.going_count }} going{% if event.capacity %} / {{ event.capacity }}{% endif %}</span>
+      {% endif %}
+
+      {% if show_join %}
+        <button class="btn-primary btn-sm" data-join-slug="{{ event.slug }}">Join event</button>
+      {% endif %}
+    </div>
+  </div>
+</div>

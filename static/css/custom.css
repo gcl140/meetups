@@ -1,0 +1,18 @@
+/* Small non-utility touches that don't fit neatly as Tailwind @apply rules. */
+
+body {
+  background-image: radial-gradient(circle at top, #fbf1e2 0%, #faf6f1 55%, #f2e8dc 100%);
+  background-attachment: fixed;
+}
+
+#chat-log::-webkit-scrollbar {
+  width: 8px;
+}
+#chat-log::-webkit-scrollbar-thumb {
+  background-color: #d3ab7d;
+  border-radius: 9999px;
+}
+
+.event-cover-fallback {
+  background: linear-gradient(135deg, #c08a56 0%, #8a5732 100%);
+}
