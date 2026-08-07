@@ -106,8 +106,18 @@ function initChatWidget(root) {
     }`;
 
     if (!message.is_bot) {
-      const sender = document.createElement('p');
-      sender.className = 'text-xs font-semibold opacity-70 mb-0.5';
+      // sender_id is null for a message whose author's account was
+      // deleted -- fall back to plain text since there's no profile to link to.
+      const sender = document.createElement(message.sender_id ? 'a' : 'p');
+      sender.className = 'text-xs font-semibold mb-0.5 inline-block';
+      if (message.sender_id) {
+        sender.href = `/accounts/users/${message.sender_id}/`;
+        sender.target = '_blank';
+        sender.rel = 'noopener';
+        sender.classList.add('hover:underline');
+      } else {
+        sender.classList.add('opacity-70');
+      }
       sender.textContent = message.sender;
       wrap.appendChild(sender);
     }

@@ -7,3 +7,5 @@ icalendar>=5.0
 APScheduler>=3.10
 python-dotenv>=1.0
 whitenoise>=6.7
+bleach>=6.1
+requests>=2.31

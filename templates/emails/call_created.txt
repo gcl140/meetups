@@ -1,0 +1,13 @@
+Hi {{ user.first_name|default:user.display_name }},
+
+A new planning call was scheduled for "{{ event.title }}": {{ call.title }}
+When: {{ call.scheduled_at }}{% if call.ends_at %} - {{ call.ends_at|time:"H:i" }} ({{ call.duration_minutes }} min){% endif %}
+{% if call.call_link %}Join: {{ call.call_link }}{% endif %}
+
+{{ call.description }}
+
+View the event: {{ event_url }}
+
+A calendar file for this call is attached. You'll get a reminder daily starting a week before it happens.
+
+— Meetups

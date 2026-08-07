@@ -252,3 +252,4 @@ npm-debug.log*
 .vscode/
 .idea/
 junk/
+.gstack/

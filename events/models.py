@@ -1,3 +1,5 @@
+import random
+import string
 import uuid
 
 from django.conf import settings
@@ -5,6 +7,12 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
+
+SLUG_SUFFIX_ALPHABET = string.ascii_lowercase + string.digits
+
+
+def random_slug_suffix(length=6):
+    return ''.join(random.choices(SLUG_SUFFIX_ALPHABET, k=length))
 
 
 class Event(models.Model):
@@ -51,12 +59,13 @@ class Event(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            base_slug = slugify(self.title)[:200] or 'event'
-            slug = base_slug
-            i = 1
+            # Short and non-guessable rather than the full title: first
+            # three words, then a random suffix so the URL doesn't just
+            # leak the whole (possibly long) event name.
+            base_slug = slugify(' '.join(self.title.split()[:3]))[:100] or 'event'
+            slug = f'{base_slug}-{random_slug_suffix()}'
             while Event.objects.filter(slug=slug).exclude(pk=self.pk).exists():
-                i += 1
-                slug = f'{base_slug}-{i}'
+                slug = f'{base_slug}-{random_slug_suffix()}'
             self.slug = slug
         super().save(*args, **kwargs)
 
@@ -192,6 +201,23 @@ class EventAction(models.Model):
         return self.deadline < timezone.now()
 
 
+class ActionCompletion(models.Model):
+    """Per-attendee completion for a before/after-event task. Deliberately
+    independent per person (like CallRsvp for planning calls) rather than a
+    single shared flag -- one member finishing a task doesn't finish it for
+    everyone else going to the event."""
+
+    action = models.ForeignKey(EventAction, on_delete=models.CASCADE, related_name='completions')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('action', 'user')
+
+    def __str__(self):
+        return f'{self.user} completed {self.action}'
+
+
 class EventPhoto(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='photos')
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -212,6 +238,10 @@ class PlanningCall(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     scheduled_at = models.DateTimeField()
+    ends_at = models.DateTimeField(
+        blank=True, null=True,
+        help_text="When the call is expected to wrap up -- shown to attendees as the call's length.",
+    )
     call_link = models.URLField(blank=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -221,6 +251,42 @@ class PlanningCall(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def is_past_due(self):
+        return (self.ends_at or self.scheduled_at) < timezone.now()
+
+    @property
+    def is_ongoing(self):
+        if not self.ends_at:
+            return False
+        return self.scheduled_at <= timezone.now() <= self.ends_at
+
+    @property
+    def duration_minutes(self):
+        if not self.ends_at:
+            return None
+        return int((self.ends_at - self.scheduled_at).total_seconds() // 60)
+
+
+class CallRsvp(models.Model):
+    """Lightweight per-user "will attend" flag for a planning call --
+    deliberately not EventMembership.rsvp_status's going/maybe/not_going
+    (a call is a single meeting, not the whole event), and not a shared
+    completion flag either: whether a call happened isn't a thing one
+    member should be able to toggle for everyone else."""
+
+    call = models.ForeignKey(PlanningCall, on_delete=models.CASCADE, related_name='rsvps')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    will_attend = models.BooleanField(default=True)
+    responded_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('call', 'user')
+
+    def __str__(self):
+        state = 'attending' if self.will_attend else 'not attending'
+        return f'{self.user} @ {self.call} ({state})'
 
 
 class Attendance(models.Model):
@@ -243,17 +309,20 @@ class Attendance(models.Model):
 class ReminderLog(models.Model):
     TYPE_EVENT_UPCOMING = 'event_upcoming'
     TYPE_ACTION_DEADLINE = 'action_deadline'
+    TYPE_CALL_REMINDER = 'call_reminder'
     TYPE_CHOICES = [
         (TYPE_EVENT_UPCOMING, 'Event upcoming'),
         (TYPE_ACTION_DEADLINE, 'Action deadline'),
+        (TYPE_CALL_REMINDER, 'Planning call reminder'),
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     event_action = models.ForeignKey(EventAction, on_delete=models.CASCADE, blank=True, null=True)
+    planning_call = models.ForeignKey(PlanningCall, on_delete=models.CASCADE, blank=True, null=True)
     reminder_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-    window_label = models.CharField(max_length=20, help_text='e.g. "24h", "1h", dedupes per reminder window.')
+    window_label = models.CharField(max_length=20, help_text='e.g. "7d", "1d", dedupes per reminder window.')
     sent_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'event', 'event_action', 'reminder_type', 'window_label')
+        unique_together = ('user', 'event', 'event_action', 'planning_call', 'reminder_type', 'window_label')

@@ -52,6 +52,36 @@ def build_action_ics(action):
     return cal.to_ical()
 
 
+def build_call_ics(call):
+    cal = Calendar()
+    cal.add('prodid', '-//Meetups//meetups.local//')
+    cal.add('version', '2.0')
+
+    vevent = ICalEvent()
+    vevent.add('uid', f'call-{call.pk}@meetups.local')
+    vevent.add('summary', f'{call.event.title}: {call.title}')
+    vevent.add('dtstart', call.scheduled_at)
+    vevent.add('dtend', call.ends_at or call.scheduled_at)
+
+    # Calendar apps render `location` inconsistently (and some hide it
+    # entirely on mobile), so the join link goes in both `location` and
+    # the description body -- the description is the one place it's
+    # reliably visible next to the agenda when the reminder fires.
+    description_parts = []
+    if call.description:
+        description_parts.append(call.description)
+    if call.call_link:
+        description_parts.append(f'Join: {call.call_link}')
+    if description_parts:
+        vevent.add('description', '\n\n'.join(description_parts))
+    if call.call_link:
+        vevent.add('location', call.call_link)
+
+    vevent.add('url', _absolute_url(call.event.get_absolute_url()))
+    cal.add_component(vevent)
+    return cal.to_ical()
+
+
 def _send_email_with_ics(*, to_email, subject, template_prefix, context, ics_bytes, ics_filename):
     text_body = render_to_string(f'emails/{template_prefix}.txt', context)
     html_body = render_to_string(f'emails/{template_prefix}.html', context)
@@ -99,6 +129,95 @@ def send_action_deadline_email(action, user, window_label):
         ics_bytes=ics_bytes,
         ics_filename=f'{action.event.slug}-action-{action.pk}.ics',
     )
+
+
+def send_call_reminder_email(call, user, window_label):
+    ics_bytes = build_call_ics(call)
+    context = {
+        'user': user,
+        'call': call,
+        'event': call.event,
+        'window_label': window_label,
+        'event_url': _absolute_url(call.event.get_absolute_url()),
+    }
+    _send_email_with_ics(
+        to_email=user.email,
+        subject=f'Upcoming call for {call.event.title}: {call.title}',
+        template_prefix='call_reminder',
+        context=context,
+        ics_bytes=ics_bytes,
+        ics_filename=f'{call.event.slug}-call-{call.pk}.ics',
+    )
+
+
+def _notify_members_of_new_item(event, *, exclude_user_id, subject, template_prefix, context_extra, ics_bytes, ics_filename):
+    from .models import EventMembership
+
+    recipients = (
+        EventMembership.objects.filter(event=event)
+        .exclude(rsvp_status=EventMembership.STATUS_NOT_GOING)
+        .exclude(user_id=exclude_user_id)
+        .select_related('user')
+    )
+    for membership in recipients:
+        context = {'user': membership.user, 'event': event, **context_extra}
+        _send_email_with_ics(
+            to_email=membership.user.email,
+            subject=subject,
+            template_prefix=template_prefix,
+            context=context,
+            ics_bytes=ics_bytes,
+            ics_filename=ics_filename,
+        )
+
+
+def send_new_action_email(action):
+    """Lets everyone know a new before/after-event task was added, so it
+    doesn't just sit invisible on the event page until the first deadline
+    reminder fires."""
+    event = action.event
+    label = action.get_action_type_display().lower()
+    _notify_members_of_new_item(
+        event,
+        exclude_user_id=None,
+        subject=f'New task for {event.title}: {action.title}',
+        template_prefix='action_created',
+        context_extra={'action': action, 'label': label, 'event_url': _absolute_url(event.get_absolute_url())},
+        ics_bytes=build_action_ics(action),
+        ics_filename=f'{event.slug}-action-{action.pk}.ics',
+    )
+
+
+def send_new_call_email(call):
+    """Same as send_new_action_email, for a newly scheduled planning call."""
+    event = call.event
+    _notify_members_of_new_item(
+        event,
+        exclude_user_id=call.created_by_id,
+        subject=f'New planning call for {event.title}: {call.title}',
+        template_prefix='call_created',
+        context_extra={'call': call, 'event_url': _absolute_url(event.get_absolute_url())},
+        ics_bytes=build_call_ics(call),
+        ics_filename=f'{event.slug}-call-{call.pk}.ics',
+    )
+
+
+def send_call_rsvp_notification(call, user):
+    """Tells the event admin someone just said they're attending a
+    planning call -- not sent for "can't make it" (that's a non-event
+    for the admin) and not sent when the admin RSVPs to their own call."""
+    admin = call.event.admin
+    context = {
+        'user': admin, 'attendee': user, 'call': call, 'event': call.event,
+        'event_url': _absolute_url(call.event.get_absolute_url()),
+    }
+    text_body = render_to_string('emails/call_rsvp_notification.txt', context)
+    html_body = render_to_string('emails/call_rsvp_notification.html', context)
+    msg = EmailMultiAlternatives(
+        subject=f'{user.display_name} is attending: {call.title}', body=text_body, to=[admin.email],
+    )
+    msg.attach_alternative(html_body, 'text/html')
+    msg.send(fail_silently=True)
 
 
 def send_invite_email(invitation_or_membership, *, is_new_account, token=None):

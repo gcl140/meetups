@@ -1,6 +1,7 @@
 from django import forms
 
 from .models import Event, EventAction, EventPhoto, PlanningCall
+from .richtext import sanitize_rich_text
 
 DATETIME_WIDGET = forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M')
 
@@ -18,7 +19,9 @@ class EventForm(forms.ModelForm):
             'title': forms.TextInput(attrs={'class': '!text-lg !font-medium', 'placeholder': 'Give it a name'}),
             'start_datetime': DATETIME_WIDGET,
             'end_datetime': DATETIME_WIDGET,
-            'description': forms.Textarea(attrs={'rows': 4, 'placeholder': "What's this about?"}),
+            # Rendered as a hidden field -- static/js/rich_text.js mounts a Quill
+            # editor over it and keeps this in sync so it still POSTs normally.
+            'description': forms.Textarea(attrs={'id': 'id_description', 'class': 'hidden'}),
             'location_name': forms.TextInput(attrs={'placeholder': 'e.g. Dartmouth College'}),
             'location_address': forms.TextInput(attrs={'placeholder': 'Street address (optional)'}),
             # Kept out of the visible layout (see event_form.html) -- filled in by the
@@ -35,6 +38,20 @@ class EventForm(forms.ModelForm):
             value = self.initial.get(name) or getattr(self.instance, name, None)
             if value:
                 self.initial[name] = value.strftime('%Y-%m-%dT%H:%M')
+
+    def clean_description(self):
+        return sanitize_rich_text(self.cleaned_data.get('description', ''))
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start = cleaned_data.get('start_datetime')
+        end = cleaned_data.get('end_datetime')
+        # is_past (models.py) treats end_datetime as authoritative when set,
+        # so an end before the start makes an event that hasn't happened
+        # yet read as already over -- reject it here instead of downstream.
+        if start and end and end < start:
+            self.add_error('end_datetime', 'End time must be after the start time.')
+        return cleaned_data
 
 
 class EventActionForm(forms.ModelForm):

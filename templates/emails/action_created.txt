@@ -1,0 +1,12 @@
+Hi {{ user.first_name|default:user.display_name }},
+
+A new task was added for "{{ event.title }}" ({{ label }}): {{ action.title }}
+Deadline: {{ action.deadline }}
+
+{{ action.description }}
+
+View the event: {{ event_url }}
+
+A calendar file with this deadline is attached. You'll get a reminder daily starting a week before it's due.
+
+— Meetups

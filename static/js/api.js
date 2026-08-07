@@ -10,7 +10,10 @@ function getCookie(name) {
 const CSRF_TOKEN = getCookie('csrftoken');
 
 async function api(path, { method = 'GET', body = null, isFormData = false } = {}) {
-  const headers = {};
+  // Marks every request made through this helper as AJAX, so views that
+  // render both a full page and a JSON/fragment response (e.g. the event
+  // edit modal) can tell which one to send back.
+  const headers = { 'X-Requested-With': 'fetch' };
   if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
     headers['X-CSRFToken'] = CSRF_TOKEN;
   }
@@ -33,7 +36,20 @@ async function api(path, { method = 'GET', body = null, isFormData = false } = {
   }
 
   if (!response.ok) {
-    const message = (data && data.detail) || 'Something went wrong.';
+    // DRF's default validation errors come back as {field: ["msg"]} or
+    // {non_field_errors: ["msg"]} rather than {detail: "msg"} -- fall back
+    // to the first error message found so those aren't silently swallowed
+    // into a generic "Something went wrong."
+    let message = 'Something went wrong.';
+    if (data && typeof data === 'object') {
+      if (data.detail) {
+        message = data.detail;
+      } else {
+        const firstValue = Object.values(data)[0];
+        if (Array.isArray(firstValue) && firstValue.length) message = firstValue[0];
+        else if (typeof firstValue === 'string') message = firstValue;
+      }
+    }
     throw new Error(message);
   }
   return data;

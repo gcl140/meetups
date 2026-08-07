@@ -16,3 +16,72 @@ body {
 .event-cover-fallback {
   background: linear-gradient(135deg, #c08a56 0%, #8a5732 100%);
 }
+
+/* Quill editor (event description), retheme its default look to match
+   the wood/brown palette instead of Quill's stock blue/grey. */
+#description-editor.ql-container {
+  border-color: #d3ab7d;
+  border-radius: 0 0 0.5rem 0.5rem;
+  font-family: "Inter", sans-serif;
+  font-size: 0.875rem;
+  min-height: 140px;
+}
+.ql-toolbar.ql-snow {
+  border-color: #d3ab7d;
+  border-radius: 0.5rem 0.5rem 0 0;
+  background: #faf6f1;
+}
+.ql-snow.ql-toolbar button:hover,
+.ql-snow.ql-toolbar button.ql-active {
+  color: #a35a2c;
+}
+.ql-snow.ql-toolbar button:hover .ql-stroke,
+.ql-snow.ql-toolbar button.ql-active .ql-stroke {
+  stroke: #a35a2c;
+}
+.ql-snow.ql-toolbar button:hover .ql-fill,
+.ql-snow.ql-toolbar button.ql-active .ql-fill {
+  fill: #a35a2c;
+}
+.ql-editor.ql-blank::before {
+  color: #c08a56;
+  font-style: normal;
+}
+
+/* Rendered rich-text output (event detail "About" section) */
+.rich-text p {
+  margin-bottom: 0.75em;
+}
+.rich-text p:last-child {
+  margin-bottom: 0;
+}
+.rich-text a {
+  color: #a35a2c;
+  text-decoration: underline;
+}
+.rich-text strong {
+  font-weight: 600;
+  color: #4d2f1c;
+}
+.rich-text code {
+  background: #f2e8dc;
+  color: #6b4327;
+  padding: 0.1em 0.35em;
+  border-radius: 0.25rem;
+  font-size: 0.85em;
+}
+.rich-text ul, .rich-text ol {
+  margin: 0 0 0.75em 1.25em;
+}
+.rich-text ul {
+  list-style: disc;
+}
+.rich-text ol {
+  list-style: decimal;
+}
+.rich-text blockquote {
+  border-left: 3px solid #c08a56;
+  padding-left: 0.75em;
+  color: #8a5732;
+  margin: 0 0 0.75em;
+}

@@ -1,0 +1,8 @@
+Hi {{ user.first_name|default:user.display_name }},
+
+{{ attendee.display_name }} ({{ attendee.email }}) just confirmed they'll attend the planning call "{{ call.title }}" for {{ event.title }}.
+When: {{ call.scheduled_at }}{% if call.ends_at %} - {{ call.ends_at|time:"H:i" }} ({{ call.duration_minutes }} min){% endif %}
+
+View the event: {{ event_url }}
+
+— Meetups

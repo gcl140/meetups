@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Resend verification, Meetups{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto card">
+  <h1 class="text-2xl mb-2"><i class="fa-solid fa-envelope-circle-check text-copper-500 mr-2"></i>Resend verification link</h1>
+  <p class="text-sm text-wood-600 mb-6">Enter the email you signed up with and we'll send a fresh link.</p>
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+    <div>
+      <label class="field-label" for="id_email">Email</label>
+      <input type="email" name="email" id="id_email" required placeholder="you@email.com">
+    </div>
+    <button type="submit" class="btn-primary w-full"><i class="fa-solid fa-paper-plane"></i> Send link</button>
+  </form>
+  <p class="text-sm text-wood-600 mt-4">
+    <a href="{% url 'accounts:login' %}" class="underline">Back to login</a>
+  </p>
+</div>
+{% endblock %}

@@ -1,8 +1,8 @@
 from django.contrib import admin
 
 from .models import (
-    Attendance, Event, EventAction, EventMembership, EventPhoto, Invitation,
-    PlanningCall, ReminderLog,
+    ActionCompletion, Attendance, CallRsvp, Event, EventAction, EventMembership, EventPhoto,
+    Invitation, PlanningCall, ReminderLog,
 )
 
 
@@ -43,6 +43,11 @@ class EventActionAdmin(admin.ModelAdmin):
     list_filter = ['action_type']
 
 
+@admin.register(ActionCompletion)
+class ActionCompletionAdmin(admin.ModelAdmin):
+    list_display = ['action', 'user', 'completed_at']
+
+
 @admin.register(EventPhoto)
 class EventPhotoAdmin(admin.ModelAdmin):
     list_display = ['event', 'uploaded_by', 'caption', 'created_at']
@@ -50,7 +55,13 @@ class EventPhotoAdmin(admin.ModelAdmin):
 
 @admin.register(PlanningCall)
 class PlanningCallAdmin(admin.ModelAdmin):
-    list_display = ['title', 'event', 'scheduled_at', 'created_by']
+    list_display = ['title', 'event', 'scheduled_at', 'ends_at', 'created_by']
+
+
+@admin.register(CallRsvp)
+class CallRsvpAdmin(admin.ModelAdmin):
+    list_display = ['call', 'user', 'will_attend', 'responded_at']
+    list_filter = ['will_attend']
 
 
 @admin.register(Attendance)

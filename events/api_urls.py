@@ -15,10 +15,12 @@ urlpatterns = [
     ),
     path('events/<slug:slug>/actions/', api.EventActionListCreateAPI.as_view(), name='api-event-actions'),
     path('actions/<int:pk>/', api.EventActionDeleteAPI.as_view(), name='api-action-delete'),
+    path('actions/<int:pk>/complete/', api.EventActionCompleteAPI.as_view(), name='api-action-complete'),
     path('events/<slug:slug>/photos/', api.EventPhotoListCreateAPI.as_view(), name='api-event-photos'),
     path('photos/<int:pk>/', api.EventPhotoDeleteAPI.as_view(), name='api-photo-delete'),
     path('events/<slug:slug>/calls/', api.PlanningCallListCreateAPI.as_view(), name='api-event-calls'),
     path('calls/<int:pk>/', api.PlanningCallDeleteAPI.as_view(), name='api-call-delete'),
+    path('calls/<int:pk>/rsvp/', api.PlanningCallRsvpAPI.as_view(), name='api-call-rsvp'),
     path('events/<slug:slug>/attendance/', api.AttendanceListAPI.as_view(), name='api-event-attendance'),
     path(
         'events/<slug:slug>/attendance/<int:user_id>/toggle/',

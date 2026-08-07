@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function bindForm() {
     window.initGeolocationButton?.(modalContent);
     window.initCoverPreview?.(modalContent);
+    window.initDescriptionEditor?.(modalContent);
 
     modalContent.querySelector('[data-modal-close]')?.addEventListener('click', () => modal.close());
 

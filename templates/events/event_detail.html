@@ -2,16 +2,32 @@
 {% load static %}
 {% block title %}{{ event.title }}, Meetups{% endblock %}
 
+{% if is_admin %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css"
+      integrity="sha256-HHlIzROqkvrGOQMZvB5eRhgj2hcVGdOnaNtWFk+HFjY=" crossorigin="anonymous">
+{% endblock %}
+{% endif %}
+
 {% block content %}
-<div id="event-detail-root" data-event-slug="{{ event.slug }}" data-is-admin="{{ is_admin|yesno:'true,false' }}">
+<div id="event-detail-root" data-event-slug="{{ event.slug }}" data-is-admin="{{ is_admin|yesno:'true,false' }}" data-user-id="{{ user.id }}">
 
   <div class="relative rounded-2xl overflow-hidden mb-6 event-cover-fallback h-56 flex items-end">
     {% if event.cover_image %}
-      <img src="{{ event.cover_image.url }}" alt="" class="absolute inset-0 w-full h-full object-cover">
+      <img id="cover-image-trigger" src="{{ event.cover_image.url }}" alt="" class="absolute inset-0 w-full h-full object-cover cursor-zoom-in">
     {% else %}
       <i class="fa-solid fa-campground text-cream-50/40 text-6xl absolute inset-0 flex items-center justify-center"></i>
     {% endif %}
   </div>
+
+  {% if event.cover_image %}
+    <dialog id="image-lightbox" class="relative rounded-2xl p-0 border-0 bg-transparent max-w-[92vw] max-h-[92vh] backdrop:bg-wood-950/85">
+      <button type="button" data-lightbox-close class="absolute top-2 right-2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <img src="{{ event.cover_image.url }}" alt="" class="max-w-[92vw] max-h-[92vh] object-contain rounded-xl">
+    </dialog>
+  {% endif %}
 
   <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
     <div>
@@ -54,7 +70,11 @@
 
       <section class="card">
         <h2 class="text-lg mb-3"><i class="fa-solid fa-align-left text-copper-500 mr-2"></i>About</h2>
-        <p class="text-wood-700 whitespace-pre-line">{{ event.description|default:"No description yet." }}</p>
+        {% if event.description %}
+          <div class="rich-text text-wood-700">{{ event.description|safe }}</div>
+        {% else %}
+          <p class="text-sm text-wood-500">No description yet.</p>
+        {% endif %}
       </section>
 
       <section class="card">
@@ -84,11 +104,17 @@
             <ul id="actions-before" class="mb-4">
               {% for a in before_actions %}
                 <li id="action-row-{{ a.id }}" class="flex items-center justify-between gap-3 py-2 border-b border-wood-100 last:border-0">
-                  <div>
-                    <p class="font-medium text-wood-900">{{ a.title }}</p>
-                    <p class="text-xs text-wood-500">Due {{ a.deadline|date:"M j, Y H:i" }}</p>
+                  <div class="min-w-0">
+                    <p class="font-medium text-wood-900{% if a.my_is_completed %} line-through text-wood-400{% endif %}">{{ a.title }}</p>
+                    <p data-action-deadline class="text-xs text-wood-500">Due {{ a.deadline|date:"M j, Y H:i" }}{% if a.my_is_completed %} · You've done this{% elif a.is_past_due %} <span class="badge-past ml-1">Overdue</span>{% endif %}</p>
+                    <p data-action-done-by class="text-xs text-wood-400{% if not a.completed_by_names %} hidden{% endif %}">Done by: {{ a.completed_by_names|join:", " }}</p>
                   </div>
-                  <div class="flex gap-2">
+                  <div class="flex gap-2 shrink-0">
+                    {% if membership %}
+                      <button data-toggle-action-complete="{{ a.id }}" class="btn-sm {% if a.my_is_completed %}btn-outline{% else %}btn-secondary{% endif %}">
+                        <i class="fa-solid {% if a.my_is_completed %}fa-rotate-left{% else %}fa-check{% endif %}"></i> {% if a.my_is_completed %}Undo{% else %}Complete{% endif %}
+                      </button>
+                    {% endif %}
                     <a href="{% url 'events:export-action-ics' event.slug a.id %}" class="btn-outline btn-sm"><i class="fa-solid fa-calendar-days"></i></a>
                     {% if is_admin %}<button data-delete-action="{{ a.id }}" class="btn-outline btn-sm"><i class="fa-solid fa-trash"></i></button>{% endif %}
                   </div>
@@ -104,11 +130,17 @@
             <ul id="actions-after" class="mb-4">
               {% for a in after_actions %}
                 <li id="action-row-{{ a.id }}" class="flex items-center justify-between gap-3 py-2 border-b border-wood-100 last:border-0">
-                  <div>
-                    <p class="font-medium text-wood-900">{{ a.title }}</p>
-                    <p class="text-xs text-wood-500">Due {{ a.deadline|date:"M j, Y H:i" }}</p>
+                  <div class="min-w-0">
+                    <p class="font-medium text-wood-900{% if a.my_is_completed %} line-through text-wood-400{% endif %}">{{ a.title }}</p>
+                    <p data-action-deadline class="text-xs text-wood-500">Due {{ a.deadline|date:"M j, Y H:i" }}{% if a.my_is_completed %} · You've done this{% elif a.is_past_due %} <span class="badge-past ml-1">Overdue</span>{% endif %}</p>
+                    <p data-action-done-by class="text-xs text-wood-400{% if not a.completed_by_names %} hidden{% endif %}">Done by: {{ a.completed_by_names|join:", " }}</p>
                   </div>
-                  <div class="flex gap-2">
+                  <div class="flex gap-2 shrink-0">
+                    {% if membership %}
+                      <button data-toggle-action-complete="{{ a.id }}" class="btn-sm {% if a.my_is_completed %}btn-outline{% else %}btn-secondary{% endif %}">
+                        <i class="fa-solid {% if a.my_is_completed %}fa-rotate-left{% else %}fa-check{% endif %}"></i> {% if a.my_is_completed %}Undo{% else %}Complete{% endif %}
+                      </button>
+                    {% endif %}
                     <a href="{% url 'events:export-action-ics' event.slug a.id %}" class="btn-outline btn-sm"><i class="fa-solid fa-calendar-days"></i></a>
                     {% if is_admin %}<button data-delete-action="{{ a.id }}" class="btn-outline btn-sm"><i class="fa-solid fa-trash"></i></button>{% endif %}
                   </div>
@@ -129,37 +161,6 @@
               <input type="datetime-local" name="deadline" required>
               <textarea name="description" placeholder="Details (optional)" class="sm:col-span-2" rows="2"></textarea>
               <button type="submit" class="btn-secondary sm:col-span-2"><i class="fa-solid fa-plus"></i> Add action</button>
-            </form>
-          {% endif %}
-        </section>
-      {% endif %}
-
-      {% if is_admin or planning_calls %}
-        <section class="card">
-          <h2 class="text-lg mb-3"><i class="fa-solid fa-phone text-copper-500 mr-2"></i>Planning calls</h2>
-          <ul id="calls-list" class="mb-4">
-            {% for call in planning_calls %}
-              <li id="call-row-{{ call.id }}" class="flex items-center justify-between gap-3 py-2 border-b border-wood-100 last:border-0">
-                <div>
-                  <p class="font-medium text-wood-900">{{ call.title }}</p>
-                  <p class="text-xs text-wood-500">{{ call.scheduled_at|date:"M j, Y H:i" }}</p>
-                </div>
-                <div class="flex gap-2">
-                  {% if call.call_link %}<a href="{{ call.call_link }}" target="_blank" class="btn-outline btn-sm"><i class="fa-solid fa-video"></i> Join call</a>{% endif %}
-                  {% if is_admin %}<button data-delete-call="{{ call.id }}" class="btn-outline btn-sm"><i class="fa-solid fa-trash"></i></button>{% endif %}
-                </div>
-              </li>
-            {% empty %}
-              <li class="text-sm text-wood-500">No planning calls scheduled.</li>
-            {% endfor %}
-          </ul>
-          {% if is_admin %}
-            <form id="call-form" class="grid sm:grid-cols-2 gap-3 pt-3 border-t border-wood-100">
-              <input type="text" name="title" placeholder="Call title" required class="sm:col-span-2">
-              <input type="datetime-local" name="scheduled_at" required>
-              <input type="url" name="call_link" placeholder="Call link (Zoom, Meet…)">
-              <textarea name="description" placeholder="Agenda (optional)" class="sm:col-span-2" rows="2"></textarea>
-              <button type="submit" class="btn-secondary sm:col-span-2"><i class="fa-solid fa-plus"></i> Add planning call</button>
             </form>
           {% endif %}
         </section>
@@ -201,20 +202,27 @@
         <ul class="space-y-2 mb-4">
           {% for m in event.membership_set.all %}
             <li id="member-row-{{ m.user.id }}" class="flex items-center justify-between gap-2">
-              <div>
-                <p class="text-sm font-medium text-wood-900">{{ m.user.display_name }}</p>
-                <span class="badge-{{ m.rsvp_status }}">{{ m.get_rsvp_status_display }}</span>
-                {% if m.user_id == event.admin_id %}<span class="badge-admin"><i class="fa-solid fa-star"></i> Admin</span>{% endif %}
-              </div>
+              <a href="{% url 'accounts:user-profile' m.user.id %}" class="flex items-center gap-2.5 min-w-0 hover:opacity-80 transition-opacity">
+                {% if m.user.avatar %}
+                  <img src="{{ m.user.avatar.url }}" alt="" class="user-avatar-light">
+                {% else %}
+                  <span class="user-avatar-light">{{ m.user.display_name|first|upper }}</span>
+                {% endif %}
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-wood-900 truncate">{{ m.user.display_name }}</p>
+                  <span class="badge-{{ m.rsvp_status }}">{{ m.get_rsvp_status_display }}</span>
+                  {% if m.user_id == event.admin_id %}<span class="badge-admin"><i class="fa-solid fa-star"></i> Admin</span>{% endif %}
+                </div>
+              </a>
               {% if is_admin and m.user_id != event.admin_id %}
-                <button data-remove-user="{{ m.user.id }}" class="btn-outline btn-sm"><i class="fa-solid fa-user-minus"></i></button>
+                <button data-remove-user="{{ m.user.id }}" class="btn-outline btn-sm shrink-0"><i class="fa-solid fa-user-minus"></i></button>
               {% endif %}
             </li>
           {% endfor %}
         </ul>
 
         {% if membership %}
-          <a href="{% url 'events:attendance' event.slug %}" class="btn-outline w-full"><i class="fa-solid fa-clipboard-check"></i> Attendance</a>
+          <button type="button" id="open-attendance-btn" class="btn-outline w-full"><i class="fa-solid fa-clipboard-check"></i> Attendance</button>
         {% endif %}
       </section>
 
@@ -241,6 +249,86 @@
         </section>
       {% endif %}
 
+      {% if is_admin or planning_calls %}
+        <section class="card">
+          <h2 class="text-lg mb-3"><i class="fa-solid fa-phone text-copper-500 mr-2"></i>Planning calls</h2>
+          <ul id="calls-list" class="mb-4">
+            {% for call in planning_calls %}
+              <li id="call-row-{{ call.id }}" class="py-3 border-b border-wood-100 last:border-0">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <p class="font-medium text-wood-900{% if call.is_past_due %} text-wood-400{% endif %}">{{ call.title }}</p>
+                    <p class="text-xs text-wood-500 mt-0.5">
+                      {{ call.scheduled_at|date:"M j, Y H:i" }}{% if call.ends_at %}–{{ call.ends_at|date:"H:i" }} ({{ call.duration_minutes }} min){% endif %}
+                    </p>
+                    {% if call.is_ongoing %}
+                      <span class="badge-live mt-1"><i class="fa-solid fa-circle text-[6px] mr-1"></i>Happening now</span>
+                    {% elif call.is_past_due %}
+                      <span class="badge-past mt-1">Ended</span>
+                    {% endif %}
+                  </div>
+                  <div class="relative shrink-0">
+                    <button type="button" data-call-menu-trigger="{{ call.id }}" class="icon-btn" aria-label="More options" aria-haspopup="true" aria-expanded="false">
+                      <i class="fa-solid fa-ellipsis-vertical"></i>
+                    </button>
+                    <div id="call-menu-{{ call.id }}" class="dropdown-panel hidden">
+                      <a data-call-ics-link href="{% url 'events:export-call-ics' event.slug call.id %}" class="dropdown-item{% if call.my_will_attend != True %} hidden{% endif %}">
+                        <i class="fa-solid fa-calendar-days w-4"></i>Add to calendar
+                      </a>
+                      {% if is_admin %}
+                        <button type="button" data-delete-call="{{ call.id }}" class="dropdown-item-danger">
+                          <i class="fa-solid fa-trash w-4"></i>Delete call
+                        </button>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex flex-col gap-2 mt-2.5">
+                  {% if call.call_link %}
+                    <a href="{{ call.call_link }}" target="_blank" class="btn-outline btn-sm w-full"><i class="fa-solid fa-video"></i> Join call</a>
+                  {% endif %}
+                  {% if membership and not call.is_past_due %}
+                    <div class="flex gap-2">
+                      <button data-call-rsvp="{{ call.id }}" data-attend="true" class="btn-sm flex-1 {% if call.my_will_attend == True %}btn-primary{% else %}btn-outline{% endif %}">
+                        <i class="fa-solid fa-check"></i> I'll attend
+                      </button>
+                      <button data-call-rsvp="{{ call.id }}" data-attend="false" class="btn-sm flex-1 {% if call.my_will_attend == False %}btn-primary{% else %}btn-outline{% endif %}">
+                        <i class="fa-solid fa-xmark"></i> Can't make it
+                      </button>
+                    </div>
+                  {% elif membership %}
+                    <p class="text-xs text-wood-400 italic">This call has ended</p>
+                  {% endif %}
+                </div>
+
+                <p id="call-attendees-{{ call.id }}" class="text-xs text-wood-500 mt-2">
+                  <i class="fa-solid fa-user-group text-copper-500 mr-1"></i>{% if call.attendee_names %}Attending: {{ call.attendee_names|join:", " }}{% else %}No one has said they're attending yet.{% endif %}
+                </p>
+              </li>
+            {% empty %}
+              <li class="text-sm text-wood-500">No planning calls scheduled.</li>
+            {% endfor %}
+          </ul>
+          {% if is_admin %}
+            <form id="call-form" class="flex flex-col gap-3 pt-3 border-t border-wood-100">
+              <input type="text" name="title" placeholder="Call title" required>
+              <div>
+                <label class="field-label !mb-1 !text-xs">Starts</label>
+                <input type="datetime-local" name="scheduled_at" required>
+              </div>
+              <div>
+                <label class="field-label !mb-1 !text-xs">Ends (optional)</label>
+                <input type="datetime-local" name="ends_at">
+              </div>
+              <input type="url" name="call_link" placeholder="Call link (Zoom, Meet…)">
+              <textarea name="description" placeholder="Agenda (optional)" rows="2"></textarea>
+              <button type="submit" class="btn-secondary"><i class="fa-solid fa-plus"></i> Add planning call</button>
+            </form>
+          {% endif %}
+        </section>
+      {% endif %}
+
       {% if is_admin %}
         <section class="card">
           <h2 class="text-lg mb-3"><i class="fa-solid fa-envelope-open-text text-copper-500 mr-2"></i>Invite people</h2>
@@ -263,12 +351,27 @@
     <div id="edit-event-modal-content"></div>
   </dialog>
 {% endif %}
+
+{% if membership %}
+  <dialog id="attendance-modal" class="rounded-2xl p-0 border border-wood-200 shadow-wood bg-white w-[92vw] max-w-md max-h-[85vh] overflow-y-auto backdrop:bg-wood-950/60">
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl"><i class="fa-solid fa-clipboard-check text-copper-500 mr-2"></i>Attendance</h2>
+        <button type="button" data-attendance-close class="icon-btn" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <ul id="attendance-list" class="divide-y divide-wood-100"></ul>
+    </div>
+  </dialog>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'js/event_detail.js' %}"></script>
 <script src="{% static 'js/chat.js' %}"></script>
 {% if is_admin %}
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"
+          integrity="sha256-9hV8cqybP1HN6tQmM1aIoCexJAXZ1qTardOKZ2stf/I=" crossorigin="anonymous"></script>
+  <script src="{% static 'js/rich_text.js' %}"></script>
   <script src="{% static 'js/geolocation.js' %}"></script>
   <script src="{% static 'js/event_form.js' %}"></script>
   <script src="{% static 'js/event_edit_modal.js' %}"></script>

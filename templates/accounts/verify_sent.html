@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Check your email, Meetups{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto card text-center">
+  <i class="fa-solid fa-envelope-circle-check text-copper-500 text-4xl mb-4"></i>
+  <h1 class="text-2xl mb-2">Check your email</h1>
+  <p class="text-sm text-wood-600 mb-6">
+    We sent a verification link to <strong>{{ email }}</strong>. Click it to activate your account and log in.
+  </p>
+  <p class="text-sm text-wood-600">
+    Didn't get it? <a href="{% url 'accounts:resend-verification' %}" class="underline">Resend the link</a>
+  </p>
+</div>
+{% endblock %}

@@ -16,8 +16,21 @@
     {% for error in form.non_field_errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     <button type="submit" class="btn-primary w-full"><i class="fa-solid fa-right-to-bracket"></i> Log in</button>
   </form>
+
+  {% if GOOGLE_OAUTH_ENABLED %}
+    <div class="flex items-center gap-3 my-4">
+      <div class="flex-1 h-px bg-wood-200"></div>
+      <span class="text-xs text-wood-500">or</span>
+      <div class="flex-1 h-px bg-wood-200"></div>
+    </div>
+    <a href="{% url 'accounts:google-login' %}" class="btn-outline w-full"><i class="fa-brands fa-google"></i> Continue with Google</a>
+  {% endif %}
+
   <p class="text-sm text-wood-600 mt-4">
     No account yet? <a href="{% url 'accounts:signup' %}" class="underline">Sign up</a>
+  </p>
+  <p class="text-sm text-wood-600 mt-1">
+    Haven't verified your email? <a href="{% url 'accounts:resend-verification' %}" class="underline">Resend the link</a>
   </p>
 </div>
 {% endblock %}

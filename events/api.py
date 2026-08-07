@@ -7,13 +7,16 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from . import permissions as perms
-from .calendarsync import send_invite_email, send_removed_email
+from .calendarsync import (
+    send_call_rsvp_notification, send_invite_email, send_new_action_email, send_new_call_email,
+    send_removed_email,
+)
 from .models import (
-    Attendance, Event, EventAction, EventMembership, EventPhoto, Invitation,
-    PlanningCall,
+    ActionCompletion, Attendance, CallRsvp, Event, EventAction, EventMembership, EventPhoto,
+    Invitation, PlanningCall,
 )
 from .serializers import (
-    AttendanceSerializer, EventActionSerializer, EventListSerializer,
+    AttendanceSerializer, CallRsvpSerializer, EventActionSerializer, EventListSerializer,
     EventMembershipSerializer, EventPhotoSerializer, PlanningCallSerializer,
 )
 
@@ -186,6 +189,7 @@ class EventActionListCreateAPI(generics.ListCreateAPIView):
         event = self.get_event()
         perms.require_admin(event, self.request.user)
         serializer.save(event=event)
+        send_new_action_email(serializer.instance)
 
 
 class EventActionDeleteAPI(generics.DestroyAPIView):
@@ -196,6 +200,58 @@ class EventActionDeleteAPI(generics.DestroyAPIView):
     def perform_destroy(self, instance):
         perms.require_admin(instance.event, self.request.user)
         instance.delete()
+
+
+class EventActionCompleteAPI(APIView):
+    """Toggle *your own* completion of a task. Any event member -- not just
+    the admin -- can check it off, since these are shared before/after-event
+    tasks rather than something only the organizer is responsible for. But
+    completion itself is tracked per person: checking it off marks it done
+    for you, not for every other attendee."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        action = get_object_or_404(EventAction, pk=pk)
+        perms.require_member(action.event, request.user)
+
+        completion = ActionCompletion.objects.filter(action=action, user=request.user).first()
+        if completion:
+            completion.delete()
+        else:
+            ActionCompletion.objects.create(action=action, user=request.user)
+
+        return Response(EventActionSerializer(action, context={'request': request}).data)
+
+
+class PlanningCallRsvpAPI(APIView):
+    """Per-user "will you be on this call" flag. Separate from the main
+    event RSVP -- someone going to the event overall may still skip a
+    planning call, or vice versa before they've decided about the event."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        call = get_object_or_404(PlanningCall, pk=pk)
+        perms.require_member(call.event, request.user)
+
+        will_attend = bool(request.data.get('will_attend', True))
+        previous = CallRsvp.objects.filter(call=call, user=request.user).first()
+        was_attending = previous.will_attend if previous else None
+
+        rsvp, _ = CallRsvp.objects.update_or_create(
+            call=call, user=request.user, defaults={'will_attend': will_attend},
+        )
+
+        # Only ping the admin on a fresh "yes" -- not on "can't make it",
+        # not on re-clicking "yes" when they were already marked attending,
+        # and not when the admin is RSVPing to their own call.
+        if will_attend and was_attending is not True and request.user.id != call.event.admin_id:
+            send_call_rsvp_notification(call, request.user)
+
+        return Response(
+            PlanningCallSerializer(call, context={'request': request}).data,
+        )
 
 
 class EventPhotoListCreateAPI(generics.ListCreateAPIView):
@@ -245,6 +301,7 @@ class PlanningCallListCreateAPI(generics.ListCreateAPIView):
         event = self.get_event()
         perms.require_admin(event, self.request.user)
         serializer.save(event=event, created_by=self.request.user)
+        send_new_call_email(serializer.instance)
 
 
 class PlanningCallDeleteAPI(generics.DestroyAPIView):

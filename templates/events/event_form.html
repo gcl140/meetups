@@ -2,6 +2,11 @@
 {% load static %}
 {% block title %}{% if is_new %}New event{% else %}Edit {{ event.title }}{% endif %}, Meetups{% endblock %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css"
+      integrity="sha256-HHlIzROqkvrGOQMZvB5eRhgj2hcVGdOnaNtWFk+HFjY=" crossorigin="anonymous">
+{% endblock %}
+
 {% block content %}
 <div class="max-w-2xl mx-auto">
   {% if is_new %}
@@ -21,6 +26,9 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"
+        integrity="sha256-9hV8cqybP1HN6tQmM1aIoCexJAXZ1qTardOKZ2stf/I=" crossorigin="anonymous"></script>
+<script src="{% static 'js/rich_text.js' %}"></script>
 <script src="{% static 'js/geolocation.js' %}"></script>
 <script src="{% static 'js/event_form.js' %}"></script>
 {% endblock %}

@@ -36,6 +36,10 @@ class User(AbstractUser):
     email = models.EmailField('email address', unique=True)
     phone = models.CharField(max_length=30, blank=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
+    google_id = models.CharField(
+        max_length=64, blank=True, null=True, unique=True,
+        help_text='Google account "sub" identifier, set once a user signs in with Google.',
+    )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []

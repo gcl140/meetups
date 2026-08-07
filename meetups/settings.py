@@ -181,6 +181,16 @@ REST_FRAMEWORK = {
 GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
 
 
+# Google sign-in (OAuth 2.0 authorization-code flow, see accounts/google_oauth.py).
+# Leave blank to disable -- the "Continue with Google" button hides itself and
+# the login/callback views bounce back with a message if hit directly.
+
+GOOGLE_OAUTH_CLIENT_ID = os.environ.get('GOOGLE_OAUTH_CLIENT_ID', '')
+GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET', '')
+# Optional override -- defaults to SITE_URL + the google-callback route.
+GOOGLE_OAUTH_REDIRECT_URI = os.environ.get('GOOGLE_OAUTH_REDIRECT_URI', '')
+
+
 # Reminder / deadline email scheduler
 
 REMINDER_POLL_MINUTES = int(os.environ.get('REMINDER_POLL_MINUTES', '5'))

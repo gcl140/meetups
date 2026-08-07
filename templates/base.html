@@ -13,28 +13,50 @@
         crossorigin="anonymous" referrerpolicy="no-referrer">
   <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
   <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+  {% block extra_head %}{% endblock %}
 </head>
 <body class="min-h-screen flex flex-col overflow-x-hidden">
   {% csrf_token %}
 
-  <nav class="bg-wood-900 shadow-wood relative z-20">
+  <nav class="bg-wood-900/95 backdrop-blur supports-[backdrop-filter]:bg-wood-900/90 shadow-wood sticky top-0 z-20 border-b border-cream-50/5">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
       <a href="{% url 'events:dashboard' %}" class="flex items-center gap-2 font-display text-xl font-semibold text-cream-50">
         <i class="fa-solid fa-campground text-copper-400"></i> Meetups
       </a>
 
-      <div class="hidden sm:flex items-center gap-6">
+      <div class="hidden sm:flex items-center gap-1">
         {% if user.is_authenticated %}
-          <a href="{% url 'events:dashboard' %}" class="nav-link"><i class="fa-solid fa-house mr-1.5"></i>Dashboard</a>
-          <a href="{% url 'events:create' %}" class="nav-link"><i class="fa-solid fa-calendar-plus mr-1.5"></i>New event</a>
-          <a href="{% url 'accounts:profile' %}" class="nav-link"><i class="fa-solid fa-user mr-1.5"></i>{{ user.display_name }}</a>
-          <form method="post" action="{% url 'accounts:logout' %}">
-            {% csrf_token %}
-            <button type="submit" class="nav-link"><i class="fa-solid fa-arrow-right-from-bracket mr-1.5"></i>Logout</button>
-          </form>
+          <a href="{% url 'events:dashboard' %}" class="nav-link{% if request.resolver_match.url_name == 'dashboard' %} nav-link-active{% endif %}"><i class="fa-solid fa-house mr-1.5"></i>Dashboard</a>
+
+          <a href="{% url 'events:create' %}" class="nav-cta ml-3"><i class="fa-solid fa-plus"></i>New event</a>
+
+          <div class="nav-divider mx-3"></div>
+
+          <div class="relative">
+            <button id="user-menu-trigger" type="button" class="user-menu-trigger" aria-haspopup="true" aria-expanded="false">
+              {% if user.avatar %}
+                <img src="{{ user.avatar.url }}" alt="" class="user-avatar">
+              {% else %}
+                <span class="user-avatar">{{ user.display_name|first|upper }}</span>
+              {% endif %}
+              <span class="hidden lg:inline text-sm font-medium text-cream-50 max-w-[9rem] truncate">{{ user.display_name }}</span>
+              <i class="fa-solid fa-chevron-down text-[0.65rem] text-wood-400 transition-transform" id="user-menu-chevron"></i>
+            </button>
+            <div id="user-menu-panel" class="user-menu-panel hidden">
+              <div class="px-3.5 py-2 border-b border-cream-50/5 mb-1">
+                <p class="text-sm font-medium text-cream-50 truncate">{{ user.display_name }}</p>
+                <p class="text-xs text-wood-400 truncate">{{ user.email }}</p>
+              </div>
+              <a href="{% url 'accounts:profile' %}" class="user-menu-item"><i class="fa-solid fa-user w-4"></i>Profile</a>
+              <form method="post" action="{% url 'accounts:logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="user-menu-item w-full text-left"><i class="fa-solid fa-arrow-right-from-bracket w-4"></i>Logout</button>
+              </form>
+            </div>
+          </div>
         {% else %}
-          <a href="{% url 'accounts:login' %}" class="nav-link"><i class="fa-solid fa-right-to-bracket mr-1.5"></i>Login</a>
-          <a href="{% url 'accounts:signup' %}" class="nav-link"><i class="fa-solid fa-user-plus mr-1.5"></i>Sign up</a>
+          <a href="{% url 'accounts:login' %}" class="nav-link">Login</a>
+          <a href="{% url 'accounts:signup' %}" class="nav-cta ml-3"><i class="fa-solid fa-user-plus"></i>Sign up</a>
         {% endif %}
       </div>
 
@@ -44,18 +66,29 @@
       </button>
     </div>
 
-    <div id="nav-mobile-panel" class="hidden sm:hidden border-t border-wood-800 px-4 py-3 flex flex-col gap-1">
+    <div id="nav-mobile-panel" class="hidden sm:hidden border-t border-cream-50/10 px-4 py-3 flex flex-col gap-1">
       {% if user.is_authenticated %}
-        <a href="{% url 'events:dashboard' %}" class="nav-link py-2"><i class="fa-solid fa-house mr-2 w-4"></i>Dashboard</a>
-        <a href="{% url 'events:create' %}" class="nav-link py-2"><i class="fa-solid fa-calendar-plus mr-2 w-4"></i>New event</a>
-        <a href="{% url 'accounts:profile' %}" class="nav-link py-2"><i class="fa-solid fa-user mr-2 w-4"></i>{{ user.display_name }}</a>
+        <div class="flex items-center gap-3 px-1 py-2 mb-1 border-b border-cream-50/10">
+          {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" alt="" class="user-avatar w-10 h-10 text-base">
+          {% else %}
+            <span class="user-avatar w-10 h-10 text-base">{{ user.display_name|first|upper }}</span>
+          {% endif %}
+          <div class="min-w-0">
+            <p class="text-sm font-medium text-cream-50 truncate">{{ user.display_name }}</p>
+            <p class="text-xs text-wood-400 truncate">{{ user.email }}</p>
+          </div>
+        </div>
+        <a href="{% url 'events:create' %}" class="nav-cta justify-center mb-2"><i class="fa-solid fa-plus"></i>New event</a>
+        <a href="{% url 'events:dashboard' %}" class="nav-link py-2 w-full{% if request.resolver_match.url_name == 'dashboard' %} nav-link-active{% endif %}"><i class="fa-solid fa-house mr-2 w-4"></i>Dashboard</a>
+        <a href="{% url 'accounts:profile' %}" class="nav-link py-2 w-full"><i class="fa-solid fa-user mr-2 w-4"></i>Profile</a>
         <form method="post" action="{% url 'accounts:logout' %}">
           {% csrf_token %}
           <button type="submit" class="nav-link py-2 w-full text-left"><i class="fa-solid fa-arrow-right-from-bracket mr-2 w-4"></i>Logout</button>
         </form>
       {% else %}
         <a href="{% url 'accounts:login' %}" class="nav-link py-2"><i class="fa-solid fa-right-to-bracket mr-2 w-4"></i>Login</a>
-        <a href="{% url 'accounts:signup' %}" class="nav-link py-2"><i class="fa-solid fa-user-plus mr-2 w-4"></i>Sign up</a>
+        <a href="{% url 'accounts:signup' %}" class="nav-cta justify-center"><i class="fa-solid fa-user-plus"></i>Sign up</a>
       {% endif %}
     </div>
   </nav>
@@ -71,7 +104,7 @@
     </div>
   {% endif %}
 
-  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8">
+  <main class="flex-1 max-w-8xl w-full mx-auto px-4 sm:px-[5.5rem] py-8">
     {% block content %}{% endblock %}
   </main>
 

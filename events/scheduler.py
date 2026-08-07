@@ -39,6 +39,10 @@ def start():
         lambda: _run_command('send_action_deadlines'),
         'interval', minutes=minutes, id='send_action_deadlines', next_run_time=None,
     )
+    _scheduler.add_job(
+        lambda: _run_command('send_call_reminders'),
+        'interval', minutes=minutes, id='send_call_reminders', next_run_time=None,
+    )
     _scheduler.start()
     logger.info('Reminder scheduler started (every %s minute(s))', minutes)
     return _scheduler

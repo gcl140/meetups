@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}{{ profile_user.display_name }}, Meetups{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <section class="card flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8 text-center sm:text-left">
+    {% if profile_user.avatar %}
+      <img src="{{ profile_user.avatar.url }}" alt="" class="user-avatar-light w-24 h-24 text-3xl">
+    {% else %}
+      <span class="user-avatar-light w-24 h-24 text-3xl">{{ profile_user.display_name|first|upper }}</span>
+    {% endif %}
+    <div class="flex-1">
+      <h1 class="text-2xl mb-1">{{ profile_user.display_name }}</h1>
+      <p class="text-sm text-wood-500 mb-4">
+        <i class="fa-regular fa-calendar mr-1.5 text-copper-500"></i>Member since {{ profile_user.date_joined|date:"F Y" }}
+      </p>
+      {% if is_self %}
+        <a href="{% url 'accounts:profile' %}" class="btn-outline btn-sm inline-flex"><i class="fa-solid fa-pen"></i> Edit profile</a>
+      {% endif %}
+    </div>
+  </section>
+
+  {% if not is_self %}
+    <section class="card">
+      <h2 class="text-lg mb-4">
+        <i class="fa-solid fa-users text-copper-500 mr-2"></i>
+        {% if common_events %}Events you have in common ({{ common_events.count }}){% else %}No events in common yet{% endif %}
+      </h2>
+      {% if common_events %}
+        <div class="grid sm:grid-cols-2 gap-5">
+          {% for event in common_events %}
+            {% include 'events/_event_card.html' with event=event %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-sm text-wood-500">You and {{ profile_user.display_name }} haven't RSVP'd "going" to the same event yet.</p>
+      {% endif %}
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

@@ -40,7 +40,8 @@
       {% for error in form.title.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
     <div>
-      <label class="field-label" for="{{ form.description.id_for_label }}">Description</label>
+      <label class="field-label">Description</label>
+      <div id="description-editor"></div>
       {{ form.description }}
       {% for error in form.description.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>

@@ -1,7 +1,8 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from .models import (
-    Attendance, Event, EventAction, EventMembership, EventPhoto, PlanningCall,
+    Attendance, CallRsvp, Event, EventAction, EventMembership, EventPhoto, PlanningCall,
 )
 
 
@@ -46,11 +47,27 @@ class EventListSerializer(serializers.ModelSerializer):
 
 class EventActionSerializer(serializers.ModelSerializer):
     is_past_due = serializers.BooleanField(read_only=True)
+    my_is_completed = serializers.SerializerMethodField()
+    completed_by_names = serializers.SerializerMethodField()
 
     class Meta:
         model = EventAction
-        fields = ['id', 'event', 'title', 'description', 'action_type', 'deadline', 'is_past_due']
+        fields = [
+            'id', 'event', 'title', 'description', 'action_type', 'deadline', 'is_past_due',
+            'my_is_completed', 'completed_by_names',
+        ]
         read_only_fields = ['event']
+
+    def get_my_is_completed(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return None
+        return obj.completions.filter(user=request.user).exists()
+
+    def get_completed_by_names(self, obj):
+        # Shown regardless of the viewer's own completion -- "who's done
+        # their part" is useful to everyone, not just people who've done theirs.
+        return [str(c.user) for c in obj.completions.select_related('user').all()]
 
 
 class EventPhotoSerializer(serializers.ModelSerializer):
@@ -63,10 +80,49 @@ class EventPhotoSerializer(serializers.ModelSerializer):
 
 
 class PlanningCallSerializer(serializers.ModelSerializer):
+    is_past_due = serializers.BooleanField(read_only=True)
+    is_ongoing = serializers.BooleanField(read_only=True)
+    duration_minutes = serializers.IntegerField(read_only=True)
+    my_will_attend = serializers.SerializerMethodField()
+    attendees = serializers.SerializerMethodField()
+
     class Meta:
         model = PlanningCall
-        fields = ['id', 'event', 'title', 'description', 'scheduled_at', 'call_link']
+        fields = [
+            'id', 'event', 'title', 'description', 'scheduled_at', 'ends_at', 'call_link',
+            'is_past_due', 'is_ongoing', 'duration_minutes', 'my_will_attend', 'attendees',
+        ]
         read_only_fields = ['event']
+
+    def validate(self, attrs):
+        # Only ever runs on create -- there's no call-edit endpoint, just
+        # add/delete, so self.instance is always None here.
+        scheduled_at = attrs.get('scheduled_at')
+        ends_at = attrs.get('ends_at')
+        if scheduled_at and scheduled_at < timezone.now():
+            raise serializers.ValidationError({'scheduled_at': "Can't schedule a call in the past."})
+        if ends_at and scheduled_at and ends_at <= scheduled_at:
+            raise serializers.ValidationError({'ends_at': 'End time must be after the start time.'})
+        return attrs
+
+    def get_my_will_attend(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return None
+        rsvp = obj.rsvps.filter(user=request.user).first()
+        return rsvp.will_attend if rsvp else None
+
+    def get_attendees(self, obj):
+        # Shown regardless of the viewer's own RSVP -- "who's coming" is
+        # useful to everyone deciding whether to join, not just attendees.
+        return [str(r.user) for r in obj.rsvps.filter(will_attend=True).select_related('user')]
+
+
+class CallRsvpSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CallRsvp
+        fields = ['id', 'call', 'user', 'will_attend', 'responded_at']
+        read_only_fields = ['call', 'user', 'responded_at']
 
 
 class AttendanceSerializer(serializers.ModelSerializer):

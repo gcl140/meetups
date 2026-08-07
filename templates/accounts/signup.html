@@ -17,6 +17,17 @@
     {% endfor %}
     <button type="submit" class="btn-primary w-full"><i class="fa-solid fa-user-plus"></i> Sign up</button>
   </form>
+
+  {% if GOOGLE_OAUTH_ENABLED %}
+    <div class="flex items-center gap-3 my-4">
+      <div class="flex-1 h-px bg-wood-200"></div>
+      <span class="text-xs text-wood-500">or</span>
+      <div class="flex-1 h-px bg-wood-200"></div>
+    </div>
+    <a href="{% url 'accounts:google-login' %}" class="btn-outline w-full"><i class="fa-brands fa-google"></i> Continue with Google</a>
+    <p class="text-xs text-wood-500 mt-2 text-center">Google accounts skip email verification -- Google already confirmed it.</p>
+  {% endif %}
+
   <p class="text-sm text-wood-600 mt-4">
     Already have an account? <a href="{% url 'accounts:login' %}" class="underline">Log in</a>
   </p>
